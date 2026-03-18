@@ -1,6 +1,7 @@
 #include "boards.h"
 #include "config_remote.h"
 #include "constants.h"
+#include "esp_pm.h"
 #include "managers/battery.h"
 #include "managers/home_assistant.h"
 #include "managers/touch.h"
@@ -26,6 +27,14 @@ static HomeAssistantTaskArgs hass_task_args;
 static BatteryTaskArgs battery_task_args;
 
 void setup() {
+    // Configure CPU dynamic frequency scaling
+    esp_pm_config_t pm_config = {
+        .max_freq_mhz = 160,
+        .min_freq_mhz = 80,
+        .light_sleep_enable = false,
+    };
+    esp_pm_configure(&pm_config);
+
     // Initialize objects
     store_init(&store);
     ui_state_init(&shared_ui_state);

@@ -1,5 +1,6 @@
 #include "managers/touch.h"
 #include "boards.h"
+#include "constants.h"
 
 static const char* TAG = "touch";
 
@@ -74,9 +75,9 @@ void touch_task(void* arg) {
                     touching = false;
                     active_widget = -1;
                 }
-                vTaskDelay(pdMS_TO_TICKS(25));
+                vTaskDelay(pdMS_TO_TICKS(TOUCH_POLL_ACTIVE_MS));
             } else {
-                vTaskDelay(pdMS_TO_TICKS(200));
+                vTaskDelay(pdMS_TO_TICKS(TOUCH_POLL_IDLE_MS));
             }
         }
     }

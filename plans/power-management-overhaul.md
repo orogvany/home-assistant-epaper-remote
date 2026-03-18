@@ -1,8 +1,8 @@
 # Power Management Overhaul
 
-**Status**: APPROVED — Starting implementation
+**Status**: IN PROGRESS — Phase 0+1 complete, starting Phase 2
 **Created**: 2026-03-17
-**Branch**: `feature/power-management` (to be created off `main`)
+**Branch**: `feature/power-management`
 
 ---
 
@@ -36,9 +36,11 @@ With aggressive idle WiFi disconnect (Phase 3), idle current could drop to ~6 mA
 
 ---
 
-## Phase 0: Battery Voltage Monitoring
+## Phase 0: Battery Voltage Monitoring ✅ COMPLETE
 
 **Goal**: Add battery voltage reading as both a serial log diagnostic and an on-screen indicator. Provides the measurement tool we need to validate every subsequent phase.
+
+**Also completed**: Replaced `esp_websocket_client` (ESP-IDF component) with `links2004/WebSockets` (Arduino native PlatformIO library) to fix build dependency issues. Simplified `home_assistant.cpp` by removing manual WebSocket frame reassembly.
 
 ### 0A. Battery ADC Reading
 
@@ -90,11 +92,11 @@ LiPo discharge curve is non-linear. Use a lookup table with interpolation:
 
 ---
 
-## Phase 1: WiFi Power Save + CPU Frequency Scaling
+## Phase 1: WiFi Power Save + CPU Frequency Scaling ✅ COMPLETE
 
 **Goal**: Lowest-hanging fruit. No architectural changes. Drop from ~154 mA to ~40-60 mA.
 
-### 1A. Enable WiFi Modem Sleep
+### 1A. Enable WiFi Modem Sleep ✅
 
 In `managers/wifi.cpp`, after `WiFi.begin()`:
 
@@ -103,14 +105,14 @@ In `managers/wifi.cpp`, after `WiFi.begin()`:
 - WebSocket connection is maintained — no application changes needed
 - Expected savings: WiFi drops from ~100-200 mA constant to ~20 mA average
 
-### 1B. Enable CPU Dynamic Frequency Scaling (DFS)
+### 1B. Enable CPU Dynamic Frequency Scaling (DFS) ✅
 
 - Configure `esp_pm_config_t` with `max_freq_mhz = 160`, `min_freq_mhz = 40`
 - CPU automatically scales down when no tasks need full speed
 - WiFi/SPI drivers acquire frequency locks when they need full speed
 - Expected savings: ~10-20 mA during idle periods
 
-### 1C. Reduce Touch Polling Frequency When Idle
+### 1C. Reduce Touch Polling Frequency When Idle ✅
 
 In `managers/touch.cpp`:
 

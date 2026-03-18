@@ -33,6 +33,10 @@ constexpr uint8_t BATTERY_ADC_PIN = 3;
 constexpr uint8_t BATTERY_CHARGE_PIN = 4;
 constexpr float BATTERY_ADC_DIVIDER_RATIO = 2.0f;
 
+// Touch polling intervals
+constexpr uint32_t TOUCH_POLL_ACTIVE_MS = 25;
+constexpr uint32_t TOUCH_POLL_IDLE_MS = 500;
+
 // Other constants
 constexpr size_t MAX_ENTITIES = 8;
 constexpr size_t MAX_WIDGETS_PER_SCREEN = 8;
