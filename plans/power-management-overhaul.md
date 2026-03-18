@@ -289,9 +289,51 @@ Save AP channel and BSSID to RTC memory (survives light sleep) for fast reconnec
 - Essentially "turning off" the device
 - Could be triggered after 1+ hour idle as a battery-saver mode
 
-### Assessment
+### 4A — SKIP. ESP32 deep sleep draws ~5.1mA (worse than light sleep + WiFi off at ~6mA). Not worth it.
 
-**Phase 4 is likely not worth pursuing** given the hardware constraints. Light sleep (Phase 2) + WiFi disconnect (Phase 3) at ~6 mA already gives ~12 days on battery. Deep sleep can't improve on this due to the 5.1 mA floor from other board components, and it loses touch wake entirely. The PMS150G power-off is viable as a "shutdown" feature but not as a sleep mode.
+### 4B. PMS150G Auto-Shutdown (VIABLE — back pocket)
+
+After extended idle (e.g., 6 hours no touch):
+1. Display "Press button to wake" on e-ink (image persists without power)
+2. PMS150G cuts main power → **9.28µA** (vs 6mA light sleep idle)
+3. User presses physical side button → full boot → WiFi reconnect → ready
+
+**Why this matters for intermittent use**: If the device sits unused for days between use sessions, the 6mA idle drain from light sleep is the dominant battery consumer. Auto-shutdown transforms battery life from ~12 days to potentially **months**.
+
+| Usage pattern | Light sleep only | With auto-shutdown after 6h |
+|---|---|---|
+| Used daily | ~12 days | ~15 days (minimal gain) |
+| Used every 3 days | ~12 days | ~150 days |
+| Used weekly | ~12 days | ~300+ days |
+
+**Blockers**:
+- `M5.Power.powerOff()` may not be fully implemented in M5Unified library (community reports it falls back to ESP32 deep sleep instead of true power-off)
+- Requires M5Unified dependency or direct PMS150G control via GPIO
+- Boot time is full cold start (setup() runs from scratch) — ~3-5 seconds to WiFi + HA
+
+**Follow-up idea: RTC periodic wake for idle screen refresh**
+
+The BM8563 RTC can set alarms up to 255 minutes (~4.25 hours). Combined with PMS150G power-off, the device could:
+1. Power off via PMS150G (9.28µA)
+2. RTC alarm fires after 4 hours → PMS150G powers on
+3. ESP32 boots, refreshes idle screen (reposition text, update clock/weather), 2-3 seconds active
+4. Power off again
+
+This would keep the idle screen alive over weeks/months of standby with negligible battery impact.
+
+**Gotchas (from M5Stack community, 2024)**:
+- The RTC (BM8563) and power controller (PMS150G) are separate chips
+- M5Unified's `timerSleep()` is supposed to configure the RTC alarm AND then trigger PMS150G power-off, but the PMS150G power-off part was reportedly not implemented — device falls back to ESP32 deep sleep (5.1mA) instead of true power-off (9.28µA)
+- The RTC alarm itself works fine — the issue is specifically the PMS150G power-off integration
+- Unknown whether RTC INT pin is wired to PMS150G wake input (schematic investigation needed)
+- These reports are from 2024 — M5Unified library may have been updated since
+
+**Investigation needed**:
+- Check if M5Unified `powerOff()` / `timerSleep()` has been fixed
+- Check M5Paper S3 schematic for RTC INT → PMS150G wake wiring
+- Determine if we can bypass M5Unified and control BM8563 + PMS150G directly via I2C/GPIO
+
+**Recommendation**: Implement after Phase 3 is proven stable.
 
 ---
 
