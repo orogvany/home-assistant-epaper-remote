@@ -199,15 +199,15 @@ bool Slider::isTouching(const TouchEvent* touch_event) const {
 
 uint8_t Slider::getValueFromTouch(const TouchEvent* touch_event, uint8_t original_value) const {
     const int touch_x = static_cast<int>(touch_event->x);
-
-    // Slider geometry
     const int slider_start = static_cast<int>(rect_.x) + SLIDER_OFFSET;
+
+    // Tap on icon area toggles between off and full on
+    if (touch_x < slider_start) {
+        return original_value > 0 ? 0 : 100;
+    }
+
     const int slider_end = static_cast<int>(rect_.x) + static_cast<int>(rect_.w) - BUTTON_SIZE / 2;
-
-    // Clamp touch to slider range
     const int clamped_x = std::min(slider_end, std::max(slider_start, touch_x));
-
-    // Normalize to 0–100
     const int value = (100 * (clamped_x - slider_start)) / (slider_end - slider_start);
 
     return static_cast<uint8_t>(value);

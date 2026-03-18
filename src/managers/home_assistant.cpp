@@ -107,7 +107,8 @@ void hass_parse_entity_update(home_assistant_context_t* hass, uint8_t widget_idx
     }
 
     TickType_t now = xTaskGetTickCount();
-    if ((now - hass->last_command_sent_at_ms[widget_idx]) < pdMS_TO_TICKS(HASS_IGNORE_UPDATE_DELAY_MS)) {
+    if (hass->last_command_sent_at_ms[widget_idx] != 0 &&
+        (now - hass->last_command_sent_at_ms[widget_idx]) < pdMS_TO_TICKS(HASS_IGNORE_UPDATE_DELAY_MS)) {
         ESP_LOGI(TAG, "Ignoring update of entity %s", hass->entity_ids[widget_idx]);
     } else {
         uint8_t value = 0;

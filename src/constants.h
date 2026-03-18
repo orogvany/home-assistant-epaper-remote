@@ -41,7 +41,7 @@ constexpr uint32_t TOUCH_POLL_IDLE_MS = 500;
 constexpr uint32_t SLEEP_WAKE_INTERVAL_MS = 5000;
 
 // Other constants
-constexpr size_t MAX_ENTITIES = 8;
+constexpr size_t MAX_ENTITIES = 16;
 constexpr size_t MAX_WIDGETS_PER_SCREEN = 8;
 constexpr uint32_t TOUCH_RELEASE_TIMEOUT_MS = 50;
 constexpr uint32_t DISPLAY_FULL_REDRAW_TIMEOUT_MS = 30000;
