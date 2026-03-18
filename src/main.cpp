@@ -4,6 +4,7 @@
 #include "driver/gpio.h"
 #include "esp_sleep.h"
 #include "esp_freertos_hooks.h"
+#include <Wire.h>
 #include "managers/battery.h"
 #include "managers/home_assistant.h"
 #include "managers/touch.h"
@@ -34,6 +35,13 @@ static bool idle_hook() {
 }
 
 void setup() {
+    // Put BMI270 gyroscope into suspend mode (~3.5µA vs ~950µA)
+    Wire.begin(TOUCH_SDA, TOUCH_SCL);
+    Wire.beginTransmission(0x68);
+    Wire.write(0x7D); // PWR_CTRL register
+    Wire.write(0x00); // Disable accelerometer and gyroscope
+    Wire.endTransmission();
+
     // Configure light sleep wake sources
     esp_sleep_enable_timer_wakeup(SLEEP_WAKE_INTERVAL_MS * 1000);
     gpio_wakeup_enable((gpio_num_t)TOUCH_INT, GPIO_INTR_LOW_LEVEL);

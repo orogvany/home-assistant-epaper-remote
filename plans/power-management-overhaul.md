@@ -246,6 +246,26 @@ Save AP channel and BSSID to RTC memory (survives light sleep) for fast reconnec
 
 ---
 
+## Future: Idle Screen (clock, weather, etc.)
+
+**Deferred** — not implementing now. When idle, the screen should display something useful (clock, current weather, etc.) rather than going blank or showing "tap to wake." This is a larger feature that will be designed separately.
+
+- E-ink burn-in research (see `plans/eink/research.md`) confirms static content is not inherently damaging — ghosting is reversible with full refreshes
+- A moving idle screen would still be good practice for very long idle periods
+- Blank screen looks like a dead device to visitors
+
+---
+
+## Phase 3.5: BMI270 Gyroscope Low Power
+
+**Goal**: Ensure the BMI270 IMU is in suspend mode since we don't use it. Board specs show 949.58µA with gyro on vs 9.28µA with gyro in low power — nearly 1mA wasted.
+
+- BMI270 defaults to suspend mode (3.5µA) after POR, but something may be waking it
+- I2C address: 0x68 or 0x69, shares I2C bus with GT911 (SDA=41, SCL=42)
+- Need to verify current state and explicitly put it in suspend if not already
+
+---
+
 ## Phase 4: Deep Sleep for Long Idle (Optional/Experimental)
 
 **Goal**: Maximize battery life for overnight/unused periods. This phase has significant trade-offs.
