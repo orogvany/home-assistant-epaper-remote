@@ -351,6 +351,8 @@ void home_assistant_task(void* arg) {
 
     Command command;
     while (1) {
+        ulTaskNotifyTake(pdTRUE, pdMS_TO_TICKS(SLEEP_WAKE_INTERVAL_MS));
+
         wsClient->loop();
 
         xSemaphoreTake(hass->mutex, portMAX_DELAY);
@@ -364,7 +366,5 @@ void home_assistant_task(void* arg) {
                 vTaskDelay(pdMS_TO_TICKS(HASS_TASK_SEND_DELAY_MS));
             }
         }
-
-        vTaskDelay(pdMS_TO_TICKS(10));
     }
 }

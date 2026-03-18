@@ -16,11 +16,11 @@ static const char* const TEXT_HASS_INVALID_KEY[] = {"Cannot connect", "to Home A
 static const char* const TEXT_GENERIC_ERROR[] = {"Unknown error", nullptr};
 
 void accumulate_damage(Rect& acc, const Rect& r) {
-    if (r.w <= 0 || r.h <= 0) {
+    if (r.w == 0 || r.h == 0) {
         return;
     }
 
-    if (acc.w <= 0 || acc.h <= 0) {
+    if (acc.w == 0 || acc.h == 0) {
         acc = r;
         return;
     }

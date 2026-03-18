@@ -24,5 +24,6 @@ void launch_wifi(Configuration* config, EntityStore* store) {
 
     WiFi.mode(WIFI_STA);
     WiFi.setSleep(WIFI_PS_MIN_MODEM);
+    WiFi.setAutoReconnect(true);
     WiFi.begin(config->wifi_ssid, config->wifi_password);
 }
