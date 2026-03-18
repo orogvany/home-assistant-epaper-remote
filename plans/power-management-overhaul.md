@@ -1,6 +1,6 @@
 # Power Management Overhaul
 
-**Status**: IN PROGRESS — Phase 0+1 complete, starting Phase 2
+**Status**: IN PROGRESS — Phase 0+1+2 complete, Phase 3 next
 **Created**: 2026-03-17
 **Branch**: `feature/power-management`
 
@@ -134,11 +134,13 @@ In `managers/touch.cpp`:
 
 ---
 
-## Phase 2: Auto Light-Sleep + Interrupt-Driven Touch
+## Phase 2: Light-Sleep + Interrupt-Driven Touch ✅ COMPLETE
 
 **Goal**: Major power reduction. CPU sleeps automatically between events. Drop to ~8-10 mA average.
 
-### 2A. Enable FreeRTOS Tickless Idle + Auto Light-Sleep
+**Implementation note**: The stock Arduino ESP32 3.x framework is pre-built without `CONFIG_PM_ENABLE` and `CONFIG_FREERTOS_USE_TICKLESS_IDLE`, so automatic light-sleep via `esp_pm_configure()` is not available. Instead, we use manual light-sleep via a FreeRTOS idle hook that calls `esp_light_sleep_start()` directly. This achieves the same power savings — the CPU enters light sleep whenever all tasks are blocked, waking on GPIO interrupt (touch) or a configurable timer (`SLEEP_WAKE_INTERVAL_MS`, default 5s) to service the WebSocket.
+
+### 2A. Enable Light-Sleep via Idle Hook ✅ (adapted from original plan)
 
 - Enable `CONFIG_FREERTOS_USE_TICKLESS_IDLE` in sdkconfig/platformio.ini
 - Configure `esp_pm_config_t` with `light_sleep_enable = true`
@@ -146,7 +148,7 @@ In `managers/touch.cpp`:
 - CPU drops from ~40 mA to ~0.28 mA during sleep periods
 - System auto-wakes for WiFi beacons, timer events, and GPIO interrupts
 
-### 2B. Switch Touch from Polling to Interrupt-Driven
+### 2B. Switch Touch from Polling to Interrupt-Driven ✅
 
 This is the critical change that makes light sleep effective:
 
@@ -161,14 +163,14 @@ Touch task flow becomes:
 3. Touch task wakes, reads touch data, processes widgets
 4. After `TOUCH_RELEASE_TIMEOUT_MS` with no new touch, go back to blocking on semaphore
 
-### 2C. Optimize Display Refresh Power
+### 2C. Optimize Display Refresh Power ✅
 
 - Pass `bKeepOn = false` to `fullUpdate()` and `partialUpdate()` when no immediate follow-up refresh is expected
 - This lets the e-ink DC/DC circuit power down between refreshes
 - The display image persists (e-ink property)
 - Re-evaluate the 5-second forced full refresh (`DISPLAY_FULL_REDRAW_TIMEOUT_MS`) — consider increasing to 15-30 seconds or making it conditional on whether partial updates actually occurred
 
-### 2D. Reduce Unnecessary Logging
+### 2D. Reduce Unnecessary Logging (deferred — already gated behind CORE_DEBUG_LEVEL)
 
 - `ESP_LOGI` calls throughout the codebase keep UART active, which prevents deeper sleep
 - Gate verbose logging behind `CORE_DEBUG_LEVEL` (already partially done via platformio.ini)

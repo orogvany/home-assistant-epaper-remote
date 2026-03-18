@@ -1,8 +1,21 @@
 #include "managers/touch.h"
 #include "boards.h"
 #include "constants.h"
+#include "freertos/FreeRTOS.h"
+#include "freertos/semphr.h"
+#include <Arduino.h>
 
 static const char* TAG = "touch";
+
+static SemaphoreHandle_t touch_semaphore = nullptr;
+
+static void IRAM_ATTR touch_isr() {
+    BaseType_t xHigherPriorityTaskWoken = pdFALSE;
+    xSemaphoreGiveFromISR(touch_semaphore, &xHigherPriorityTaskWoken);
+    if (xHigherPriorityTaskWoken) {
+        portYIELD_FROM_ISR();
+    }
+}
 
 void touch_task(void* arg) {
     TouchTaskArgs* ctx = static_cast<TouchTaskArgs*>(arg);
@@ -10,11 +23,9 @@ void touch_task(void* arg) {
     EntityStore* store = ctx->store;
     Screen* screen = ctx->screen;
 
-    // UI State values
     uint32_t ui_state_version = 0;
     auto* ui_state = new UIState{};
 
-    // Touch infos
     TOUCHINFO ti;
     TouchEvent touch_event = TouchEvent{};
     bool touching = false;
@@ -23,30 +34,28 @@ void touch_task(void* arg) {
     uint8_t widget_original_value = 0;
     uint8_t widget_current_value = 0;
 
-    // Initialize touch
     ESP_LOGI(TAG, "Initializing touchscreen...");
     int rc = bbct->init(TOUCH_SDA, TOUCH_SCL, TOUCH_RST, TOUCH_INT);
     ESP_LOGI(TAG, "init() rc = %d", rc);
     int type = bbct->sensorType();
     ESP_LOGI(TAG, "Sensor type = %d", type);
 
+    touch_semaphore = xSemaphoreCreateBinary();
+    attachInterrupt(digitalPinToInterrupt(TOUCH_INT), touch_isr, FALLING);
+
     while (true) {
         if (bbct->getSamples(&ti)) {
             last_touch_ms = millis();
             ui_state_copy(ctx->state, &ui_state_version, ui_state);
 
-            // We're already targeting a widget
             if (active_widget != -1) {
                 if (touch_event.x == ti.x[0] && touch_event.y == ti.y[0]) {
-                    // Finger did not move, ignore
                 } else {
                     touch_event.x = ti.x[0];
                     touch_event.y = ti.y[0];
                     ESP_LOGI(TAG, "Widget %d, Coordinates: %d %d", active_widget, touch_event.x, touch_event.y);
 
-                    // Get the new value
                     widget_current_value = screen->widgets[active_widget]->getValueFromTouch(&touch_event, widget_original_value);
-
                     store_send_command(store, screen->entity_ids[active_widget], widget_current_value);
                 }
             } else if (touching == false) {
@@ -58,12 +67,9 @@ void touch_task(void* arg) {
                         ESP_LOGI(TAG, "Starting touch on widget %d", widget_idx);
                         active_widget = widget_idx;
 
-                        // Get the new value
                         widget_original_value = ui_state->widget_values[widget_idx];
                         widget_current_value = screen->widgets[widget_idx]->getValueFromTouch(&touch_event, widget_original_value);
-
                         store_send_command(store, screen->entity_ids[active_widget], widget_current_value);
-
                         break;
                     }
                 }
@@ -77,7 +83,7 @@ void touch_task(void* arg) {
                 }
                 vTaskDelay(pdMS_TO_TICKS(TOUCH_POLL_ACTIVE_MS));
             } else {
-                vTaskDelay(pdMS_TO_TICKS(TOUCH_POLL_IDLE_MS));
+                xSemaphoreTake(touch_semaphore, portMAX_DELAY);
             }
         }
     }

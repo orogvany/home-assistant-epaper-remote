@@ -1,7 +1,9 @@
 #include "boards.h"
 #include "config_remote.h"
 #include "constants.h"
-#include "esp_pm.h"
+#include "driver/gpio.h"
+#include "esp_sleep.h"
+#include "esp_freertos_hooks.h"
 #include "managers/battery.h"
 #include "managers/home_assistant.h"
 #include "managers/touch.h"
@@ -26,14 +28,20 @@ static TouchTaskArgs touch_task_args;
 static HomeAssistantTaskArgs hass_task_args;
 static BatteryTaskArgs battery_task_args;
 
+static bool idle_hook() {
+    esp_light_sleep_start();
+    return true;
+}
+
 void setup() {
-    // Configure CPU dynamic frequency scaling
-    esp_pm_config_t pm_config = {
-        .max_freq_mhz = 160,
-        .min_freq_mhz = 80,
-        .light_sleep_enable = false,
-    };
-    esp_pm_configure(&pm_config);
+    // Configure light sleep wake sources
+    esp_sleep_enable_timer_wakeup(SLEEP_WAKE_INTERVAL_MS * 1000);
+    gpio_wakeup_enable((gpio_num_t)TOUCH_INT, GPIO_INTR_LOW_LEVEL);
+    esp_sleep_enable_gpio_wakeup();
+
+    // Register idle hook to enter light sleep when all tasks are blocked
+    esp_register_freertos_idle_hook_for_cpu(idle_hook, 0);
+    esp_register_freertos_idle_hook_for_cpu(idle_hook, 1);
 
     // Initialize objects
     store_init(&store);

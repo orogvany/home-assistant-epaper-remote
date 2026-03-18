@@ -97,7 +97,7 @@ void ui_task(void* arg) {
                 if (current_state.mode == UiMode::MainScreen) {
                     // Display the main screen in its full glory
                     ui_main_screen_full_draw(&current_state, BitDepth::BD_4BPP, ctx->screen, ctx->epaper);
-                    ctx->epaper->fullUpdate(CLEAR_SLOW, true);
+                    ctx->epaper->fullUpdate(CLEAR_SLOW, false);
 
                     // Preload the 1BPP version for fast updates
                     ctx->epaper->setMode(BB_MODE_1BPP);
@@ -106,7 +106,7 @@ void ui_task(void* arg) {
                     ctx->epaper->backupPlane();
                 } else {
                     ui_show_message(current_state.mode, ctx->epaper);
-                    ctx->epaper->fullUpdate(CLEAR_SLOW, true);
+                    ctx->epaper->fullUpdate(CLEAR_SLOW, false);
                 }
                 display_is_dirty = false;
             } else if (current_state.mode == UiMode::MainScreen) {
@@ -131,7 +131,7 @@ void ui_task(void* arg) {
                 }
                 if (damage_accum.w > 0 || damage_accum.h > 0) {
                     ESP_LOGI(TAG, "Launching partial update rows %d to %d", damage_accum.x, damage_accum.x + damage_accum.w);
-                    ctx->epaper->partialUpdate(true,
+                    ctx->epaper->partialUpdate(false,
                                                DISPLAY_WIDTH - (damage_accum.x + damage_accum.w), // row start (reversed)
                                                DISPLAY_WIDTH - damage_accum.x                     // row end (reversed)
                     );
@@ -149,7 +149,7 @@ void ui_task(void* arg) {
             ctx->epaper->setMode(BB_MODE_4BPP);
             ctx->epaper->fillScreen(0xf);
             ui_main_screen_full_draw(&displayed_state, BitDepth::BD_4BPP, ctx->screen, ctx->epaper);
-            ctx->epaper->fullUpdate(CLEAR_FAST, true);
+            ctx->epaper->fullUpdate(CLEAR_FAST, false);
 
             // Preload the 1bpp version for fast updates
             ctx->epaper->setMode(BB_MODE_1BPP);
