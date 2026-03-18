@@ -175,13 +175,14 @@ thermostat *widget* is the problem, not the HA command support.
 2. **Slider tap-to-toggle** ✅ — small, clean UX improvement
 3. **`MAX_ENTITIES` bump to 16** ✅ — one line, free headroom
 
-### Phase B — New entity types (separate branch/PR)
+### Phase B — New entity types ✅ COMPLETE
 
-4. **New entity command types** — adapt to our WebSockets-based home_assistant.cpp
-    - Includes new `CommandType` enum values
-    - Includes state parsing expansion
-    - Includes command sending for all new types
-    - Needs careful adaptation since our HA manager was rewritten
+4. **New entity command types** ✅ — adapted to our WebSockets-based home_assistant.cpp
+    - 9 new CommandType values (cover, scene, script, lock, media player volume/play-pause, input_number, input_boolean, vacuum)
+    - Expanded state parsing (locked/unlocked, playing/paused, open/closed, idle)
+    - Added attribute parsing for cover position and media player volume
+    - Skipped climate types (SetClimateMode, SetClimateTemperature) — thermostat widget not being taken
+    - Updated config_remote.cpp.example with commented examples of all new types
 
 ### Phase C — Future consideration
 
@@ -193,8 +194,10 @@ thermostat *widget* is the problem, not the HA command support.
 
 ## Open Questions — RESOLVED
 
-1. ~~Do you actually have covers/blinds, media players, locks, or other entity types you'd want to control?~~ **Yes — media players, potentially others later.**
+1. ~~Do you actually have covers/blinds, media players, locks, or other entity types you'd want to control?~~ **Yes —
+   media players, potentially others later.**
 2. ~~Do you need more than one screen of widgets for your setup?~~ **No — keeping it concise/minimalist. Single page.**
 3. ~~Is thermostat control something you'd use on this device?~~ **No — skip thermostat.**
 
-**Implications**: Phase B (new entity types) is worth doing for media player support. Multi-page (Phase C #5) and thermostat (#6, #7) are confirmed skipped.
+**Implications**: Phase B (new entity types) is worth doing for media player support. Multi-page (Phase C #5) and
+thermostat (#6, #7) are confirmed skipped.

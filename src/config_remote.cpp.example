@@ -38,6 +38,17 @@ void configure_remote(Configuration* config, EntityStore* store, Screen* screen)
         .command_type = CommandType::AutomationOnOff,
     };
 
+    // Additional entity types available:
+    // EntityConfig blinds = {.entity_id = "cover.living_room", .command_type = CommandType::SetCoverPosition};
+    // EntityConfig movie_scene = {.entity_id = "scene.movie_mode", .command_type = CommandType::ActivateScene};
+    // EntityConfig script = {.entity_id = "script.goodnight", .command_type = CommandType::RunScript};
+    // EntityConfig front_door = {.entity_id = "lock.front_door", .command_type = CommandType::LockUnlock};
+    // EntityConfig speaker = {.entity_id = "media_player.living_room", .command_type = CommandType::SetMediaPlayerVolume};
+    // EntityConfig speaker_play = {.entity_id = "media_player.living_room", .command_type = CommandType::MediaPlayerPlayPause};
+    // EntityConfig helper_slider = {.entity_id = "input_number.target_temp", .command_type = CommandType::SetInputNumber};
+    // EntityConfig helper_toggle = {.entity_id = "input_boolean.guest_mode", .command_type = CommandType::InputBooleanToggle};
+    // EntityConfig vacuum = {.entity_id = "vacuum.roborock", .command_type = CommandType::VacuumCommand};
+
     // Add widgets
     screen_add_slider(
         SliderConfig{

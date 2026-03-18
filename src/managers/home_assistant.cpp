@@ -81,9 +81,16 @@ int16_t hass_match_entity(home_assistant_context_t* hass, char* key) {
 void hass_parse_entity_update(home_assistant_context_t* hass, uint8_t widget_idx, cJSON* item) {
     cJSON* state = cJSON_GetObjectItem(item, "s");
     if (cJSON_IsString(state)) {
-        if (strcmp(state->valuestring, "on") == 0) {
+        if (strcmp(state->valuestring, "on") == 0 ||
+            strcmp(state->valuestring, "locked") == 0 ||
+            strcmp(state->valuestring, "playing") == 0 ||
+            strcmp(state->valuestring, "open") == 0) {
             hass->entity_states[widget_idx] = true;
-        } else if (strcmp(state->valuestring, "off") == 0) {
+        } else if (strcmp(state->valuestring, "off") == 0 ||
+                   strcmp(state->valuestring, "unlocked") == 0 ||
+                   strcmp(state->valuestring, "paused") == 0 ||
+                   strcmp(state->valuestring, "idle") == 0 ||
+                   strcmp(state->valuestring, "closed") == 0) {
             hass->entity_states[widget_idx] = false;
         }
     }
@@ -103,6 +110,16 @@ void hass_parse_entity_update(home_assistant_context_t* hass, uint8_t widget_idx
         cJSON* off_brightness = cJSON_GetObjectItem(attributes, "off_brightness");
         if (cJSON_IsNumber(off_brightness)) {
             hass->entity_values[widget_idx] = off_brightness->valueint * 100 / 254;
+        }
+
+        cJSON* current_position = cJSON_GetObjectItem(attributes, "current_position");
+        if (cJSON_IsNumber(current_position)) {
+            hass->entity_values[widget_idx] = current_position->valueint;
+        }
+
+        cJSON* volume_level = cJSON_GetObjectItem(attributes, "volume_level");
+        if (cJSON_IsNumber(volume_level)) {
+            hass->entity_values[widget_idx] = (int8_t)(volume_level->valuedouble * 100);
         }
     }
 
@@ -260,6 +277,69 @@ void hass_send_command(home_assistant_context_t* hass, Command* cmd) {
             cJSON_AddStringToObject(root, "service", "turn_off");
         } else {
             cJSON_AddStringToObject(root, "service", "turn_on");
+        }
+        cJSON_AddItemToObject(root, "service_data", service_data = cJSON_CreateObject());
+        cJSON_AddStringToObject(service_data, "entity_id", cmd->entity_id);
+        break;
+    case CommandType::SetCoverPosition:
+        cJSON_AddStringToObject(root, "domain", "cover");
+        cJSON_AddStringToObject(root, "service", "set_cover_position");
+        cJSON_AddItemToObject(root, "service_data", service_data = cJSON_CreateObject());
+        cJSON_AddStringToObject(service_data, "entity_id", cmd->entity_id);
+        cJSON_AddNumberToObject(service_data, "position", cmd->value);
+        break;
+    case CommandType::ActivateScene:
+        cJSON_AddStringToObject(root, "domain", "scene");
+        cJSON_AddStringToObject(root, "service", "turn_on");
+        cJSON_AddItemToObject(root, "service_data", service_data = cJSON_CreateObject());
+        cJSON_AddStringToObject(service_data, "entity_id", cmd->entity_id);
+        break;
+    case CommandType::RunScript:
+        cJSON_AddStringToObject(root, "domain", "script");
+        cJSON_AddStringToObject(root, "service", "turn_on");
+        cJSON_AddItemToObject(root, "service_data", service_data = cJSON_CreateObject());
+        cJSON_AddStringToObject(service_data, "entity_id", cmd->entity_id);
+        break;
+    case CommandType::LockUnlock:
+        cJSON_AddStringToObject(root, "domain", "lock");
+        cJSON_AddStringToObject(root, "service", cmd->value == 0 ? "unlock" : "lock");
+        cJSON_AddItemToObject(root, "service_data", service_data = cJSON_CreateObject());
+        cJSON_AddStringToObject(service_data, "entity_id", cmd->entity_id);
+        break;
+    case CommandType::SetMediaPlayerVolume:
+        cJSON_AddStringToObject(root, "domain", "media_player");
+        cJSON_AddStringToObject(root, "service", "volume_set");
+        cJSON_AddItemToObject(root, "service_data", service_data = cJSON_CreateObject());
+        cJSON_AddStringToObject(service_data, "entity_id", cmd->entity_id);
+        cJSON_AddNumberToObject(service_data, "volume_level", cmd->value / 100.0);
+        break;
+    case CommandType::MediaPlayerPlayPause:
+        cJSON_AddStringToObject(root, "domain", "media_player");
+        cJSON_AddStringToObject(root, "service", cmd->value == 0 ? "media_pause" : "media_play");
+        cJSON_AddItemToObject(root, "service_data", service_data = cJSON_CreateObject());
+        cJSON_AddStringToObject(service_data, "entity_id", cmd->entity_id);
+        break;
+    case CommandType::SetInputNumber:
+        cJSON_AddStringToObject(root, "domain", "input_number");
+        cJSON_AddStringToObject(root, "service", "set_value");
+        cJSON_AddItemToObject(root, "service_data", service_data = cJSON_CreateObject());
+        cJSON_AddStringToObject(service_data, "entity_id", cmd->entity_id);
+        cJSON_AddNumberToObject(service_data, "value", cmd->value);
+        break;
+    case CommandType::InputBooleanToggle:
+        cJSON_AddStringToObject(root, "domain", "input_boolean");
+        cJSON_AddStringToObject(root, "service", cmd->value == 0 ? "turn_off" : "turn_on");
+        cJSON_AddItemToObject(root, "service_data", service_data = cJSON_CreateObject());
+        cJSON_AddStringToObject(service_data, "entity_id", cmd->entity_id);
+        break;
+    case CommandType::VacuumCommand:
+        cJSON_AddStringToObject(root, "domain", "vacuum");
+        if (cmd->value == 0) {
+            cJSON_AddStringToObject(root, "service", "stop");
+        } else if (cmd->value == 1) {
+            cJSON_AddStringToObject(root, "service", "start");
+        } else {
+            cJSON_AddStringToObject(root, "service", "return_to_base");
         }
         cJSON_AddItemToObject(root, "service_data", service_data = cJSON_CreateObject());
         cJSON_AddStringToObject(service_data, "entity_id", cmd->entity_id);
