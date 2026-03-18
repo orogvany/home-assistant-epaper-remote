@@ -1,6 +1,6 @@
 # Power Management Overhaul
 
-**Status**: IN PROGRESS — Phase 0+1+2 complete, Phase 3 next
+**Status**: Phase 0+1+2+3 complete. Phase 4 (PMS150G auto-shutdown) is future work.
 **Created**: 2026-03-17
 **Branch**: `feature/power-management`
 
@@ -198,24 +198,24 @@ Touch task flow becomes:
 
 ---
 
-## Phase 3: Idle Detection + WiFi Disconnect
+## Phase 3: Idle Detection + WiFi Disconnect ✅ COMPLETE
 
 **Goal**: For extended idle periods, disconnect WiFi entirely for deeper power savings.
 
-### 3A. Implement Idle Timer
+### 3A. Implement Idle Timer ✅
 
 - Track last touch timestamp globally
 - After configurable idle timeout (e.g., 5 minutes), transition to "idle" state
 - Display an idle indicator (e.g., dim status bar or subtle icon) before disconnecting
 
-### 3B. WiFi Disconnect on Extended Idle
+### 3B. WiFi Disconnect on Extended Idle ✅
 
 - After idle timeout: `WiFi.disconnect()` + `WiFi.mode(WIFI_OFF)`
 - WiFi radio off saves the ~2.45 mA modem-sleep average
 - Device draws only: GT911 doze (~0.78 mA) + board standby (~5 mA) + ESP32 light-sleep (~0.28 mA) ≈ **~6 mA**
 - Display retains last known state (e-ink)
 
-### 3C. WiFi Fast Reconnect on Touch Wake
+### 3C. WiFi Fast Reconnect on Touch Wake ✅
 
 On touch event after idle:
 1. Show "Reconnecting..." on display (fast partial update)

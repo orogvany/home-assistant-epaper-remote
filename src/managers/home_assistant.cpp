@@ -5,6 +5,7 @@
 #include "freertos/semphr.h"
 #include "managers/home_assistant.h"
 #include "store.h"
+#include <WiFi.h>
 #include <WebSocketsClient.h>
 #include <cJSON.h>
 
@@ -17,6 +18,11 @@ typedef struct home_assistant_context {
     TaskHandle_t task;
 
     uint16_t event_id;
+
+    String ws_host;
+    String ws_path;
+    uint16_t ws_port;
+    bool ws_ssl;
 
     uint8_t entity_count;
     const char* entity_ids[MAX_ENTITIES];
@@ -410,19 +416,15 @@ void home_assistant_task(void* arg) {
 
     ws_hass_ctx = hass;
 
-    bool use_ssl;
-    String host, path;
-    uint16_t port;
-    parse_url(ctx->config->home_assistant_url, &use_ssl, &host, &port, &path);
+    parse_url(ctx->config->home_assistant_url, &hass->ws_ssl, &hass->ws_host, &hass->ws_port, &hass->ws_path);
 
     WebSocketsClient* wsClient = new WebSocketsClient();
     hass->client = wsClient;
 
-    if (use_ssl) {
-        wsClient->beginSSL(host.c_str(), port, path.c_str(), nullptr, "");
-        wsClient->setAuthorization("");
+    if (hass->ws_ssl) {
+        wsClient->beginSSL(hass->ws_host.c_str(), hass->ws_port, hass->ws_path.c_str(), nullptr, "");
     } else {
-        wsClient->begin(host.c_str(), port, path.c_str());
+        wsClient->begin(hass->ws_host.c_str(), hass->ws_port, hass->ws_path.c_str());
     }
 
     wsClient->onEvent(hass_ws_event_handler);
@@ -430,20 +432,62 @@ void home_assistant_task(void* arg) {
     wsClient->enableHeartbeat(30000, 10000, 2);
 
     Command command;
+    bool wifi_is_off = false;
+
     while (1) {
         ulTaskNotifyTake(pdTRUE, pdMS_TO_TICKS(SLEEP_WAKE_INTERVAL_MS));
 
-        wsClient->loop();
+        // Check if touch woke us from idle WiFi disconnect
+        if (wifi_is_off && !store->wifi_idle_disconnected) {
+            ESP_LOGI(TAG, "Touch detected, reconnecting WiFi...");
+            WiFi.mode(WIFI_STA);
+            WiFi.setSleep(WIFI_PS_MIN_MODEM);
+            WiFi.begin(hass->config->wifi_ssid, hass->config->wifi_password);
+            wifi_is_off = false;
+            hass->state = ConnState::Initializing;
+            hass->event_id = 1;
+            store_flush_pending_commands(store);
+            store_wait_for_wifi_up(store);
 
-        xSemaphoreTake(hass->mutex, portMAX_DELAY);
-        ConnState state = hass->state;
-        xSemaphoreGive(hass->mutex);
+            if (hass->ws_ssl) {
+                wsClient->beginSSL(hass->ws_host.c_str(), hass->ws_port, hass->ws_path.c_str(), nullptr, "");
+            } else {
+                wsClient->begin(hass->ws_host.c_str(), hass->ws_port, hass->ws_path.c_str());
+            }
+            wsClient->onEvent(hass_ws_event_handler);
+            wsClient->setReconnectInterval(HASS_RECONNECT_DELAY_MS);
+            wsClient->enableHeartbeat(30000, 10000, 2);
+            continue;
+        }
 
-        if (state == ConnState::Up) {
-            while (store_get_pending_command(store, &command)) {
-                hass_send_command(hass, &command);
-                store_ack_pending_command(store, &command);
-                vTaskDelay(pdMS_TO_TICKS(HASS_TASK_SEND_DELAY_MS));
+        // Check for idle timeout → disconnect WiFi
+        if (!wifi_is_off && store->last_touch_ms > 0) {
+            uint32_t idle_ms = millis() - store->last_touch_ms;
+            if (idle_ms > IDLE_WIFI_DISCONNECT_MS) {
+                ESP_LOGI(TAG, "Idle timeout, disconnecting WiFi");
+                wsClient->disconnect();
+                WiFi.disconnect(true);
+                WiFi.mode(WIFI_OFF);
+                wifi_is_off = true;
+                store->wifi_idle_disconnected = true;
+                hass_update_state(hass, ConnState::ConnectionError);
+                continue;
+            }
+        }
+
+        if (!wifi_is_off) {
+            wsClient->loop();
+
+            xSemaphoreTake(hass->mutex, portMAX_DELAY);
+            ConnState state = hass->state;
+            xSemaphoreGive(hass->mutex);
+
+            if (state == ConnState::Up) {
+                while (store_get_pending_command(store, &command)) {
+                    hass_send_command(hass, &command);
+                    store_ack_pending_command(store, &command);
+                    vTaskDelay(pdMS_TO_TICKS(HASS_TASK_SEND_DELAY_MS));
+                }
             }
         }
     }

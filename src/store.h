@@ -58,6 +58,9 @@ struct EntityStore {
     HomeAssistantEntity entities[MAX_ENTITIES];
     uint8_t entity_count;
 
+    volatile uint32_t last_touch_ms = 0;
+    volatile bool wifi_idle_disconnected = false;
+
     SemaphoreHandle_t mutex;
     TaskHandle_t home_assistant_task;
     TaskHandle_t ui_task;

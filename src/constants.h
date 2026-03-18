@@ -40,6 +40,9 @@ constexpr uint32_t TOUCH_POLL_IDLE_MS = 500;
 // Light sleep wake interval for servicing WebSocket when idle
 constexpr uint32_t SLEEP_WAKE_INTERVAL_MS = 5000;
 
+// Idle WiFi disconnect timeout (disconnect WiFi after no touch for this long)
+constexpr uint32_t IDLE_WIFI_DISCONNECT_MS = 5 * 60 * 1000; // 5 minutes
+
 // Touch feedback
 constexpr bool BUZZER_FEEDBACK_ENABLED = true;
 constexpr uint16_t BUZZER_FREQ_HZ = 3000;
