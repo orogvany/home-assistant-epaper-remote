@@ -99,6 +99,19 @@ void setup() {
     // Initialize objects
     store_init(&store);
     store_set_last_touch(&store, millis()); // Start idle timer from boot
+
+    // Read battery immediately so first screen draw has a real value
+    if (FEATURE_BATTERY_INDICATOR && HAS_BATTERY_ADC) {
+        pinMode(BATTERY_CHARGE_PIN, INPUT);
+        uint16_t raw_mv = analogReadMilliVolts(BATTERY_ADC_PIN);
+        uint16_t voltage_mv = (uint16_t)(raw_mv * BATTERY_ADC_DIVIDER_RATIO);
+        // Simple voltage-to-percentage (rough, battery task has full lookup table)
+        uint8_t pct = voltage_mv >= 4200 ? 100 : voltage_mv <= 3300 ? 0 : (voltage_mv - 3300) * 100 / 900;
+        bool charging = (digitalRead(BATTERY_CHARGE_PIN) == LOW);
+        store_set_battery(&store, voltage_mv, pct, charging);
+        Serial.printf("Battery initial: %d mV (%d%%)\n", voltage_mv, pct);
+    }
+
     ui_state_init(&shared_ui_state);
     configure_remote(&config, &store, &screen);
     initialize_slider_sprites();

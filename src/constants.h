@@ -32,13 +32,15 @@ constexpr uint32_t IDLE_WIFI_DISCONNECT_MS = 5 * 60 * 1000;  // 5 minutes
 // RTC alarm wakes device periodically to refresh idle screen.
 // Button press wakes device for normal operation.
 constexpr bool FEATURE_PMS150G_SHUTDOWN = true;
+// How long before it goes into deep sleep since last activity
 constexpr uint32_t PMS150G_SHUTDOWN_IDLE_MS = 6UL * 60 * 60 * 1000; // 6 hours
+// How long between screen refreshes to avoid any burn in.  Also updates the battery %
 constexpr uint8_t PMS150G_RTC_WAKE_INTERVAL_MIN = 240;              // 4 hours (max 255)
 
 // --- Battery Indicator ---
 // Shows battery percentage and charging status on screen.
 // Reads ADC every BATTERY_READ_INTERVAL_MS.
-constexpr bool FEATURE_BATTERY_INDICATOR = false;
+constexpr bool FEATURE_BATTERY_INDICATOR = true;
 constexpr uint32_t BATTERY_READ_INTERVAL_MS = 5 * 60 * 1000; // 5 minutes
 constexpr uint8_t BATTERY_ADC_PIN = 3;
 constexpr uint8_t BATTERY_CHARGE_PIN = 4;

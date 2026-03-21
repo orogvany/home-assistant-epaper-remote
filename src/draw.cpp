@@ -60,7 +60,7 @@ void drawBatteryIndicator(FASTEPD* epaper, uint8_t percentage, bool charging) {
     epaper->getStringBox(label, &text_rect);
 
     uint16_t total_w = BATT_ICON_W + BATT_TIP_W + 6 + text_rect.w;
-    uint16_t x = DISPLAY_HEIGHT - BATT_MARGIN - total_w;
+    uint16_t x = DISPLAY_WIDTH - BATT_MARGIN - total_w;
     uint16_t y = BATT_MARGIN;
 
     // Clear the area
