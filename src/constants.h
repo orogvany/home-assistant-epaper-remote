@@ -16,7 +16,7 @@ constexpr bool FEATURE_WIFI_MODEM_SLEEP = true;
 // CPU enters light sleep via idle hook when all tasks are blocked.
 // Wakes on touch interrupt (GPIO 48) or timer.
 // Disabled when USB is connected (preserves serial debug).
-constexpr bool FEATURE_LIGHT_SLEEP = true;
+constexpr bool FEATURE_LIGHT_SLEEP = false; // BROKEN: light sleep corrupts e-ink display (SPI interrupted mid-refresh). Needs wake lock during display operations.
 constexpr uint32_t SLEEP_WAKE_INTERVAL_MS = 5000;            // Timer wake interval for WebSocket servicing
 constexpr uint32_t LIGHT_SLEEP_BOOT_DELAY_MS = 30000;        // Don't sleep during first 30s (let tasks fully init)
 constexpr uint32_t LIGHT_SLEEP_MIN_WAKE_US = 100000;         // Min 100ms awake between sleep cycles (microseconds)
