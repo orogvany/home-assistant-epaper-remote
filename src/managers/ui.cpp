@@ -106,6 +106,9 @@ void ui_task(void* arg) {
                     ctx->epaper->backupPlane();
                 } else {
                     ui_show_message(current_state.mode, ctx->epaper);
+                    if (FEATURE_BATTERY_INDICATOR && HAS_BATTERY_ADC) {
+                        drawBatteryIndicator(ctx->epaper, current_state.battery_percentage, current_state.battery_charging);
+                    }
                     ctx->epaper->fullUpdate(CLEAR_SLOW, false);
                 }
                 display_is_dirty = false;

@@ -4,67 +4,81 @@
 #include <cstdint>
 
 // ============================================================================
-// FEATURE FLAGS — set to false to disable individual features
+// FEATURE FLAGS + CONFIGURATION
+// Each feature's enable/disable and its config values are grouped together.
 // ============================================================================
-constexpr bool FEATURE_WIFI_MODEM_SLEEP = true;      // WiFi modem power save between DTIM beacons
-constexpr bool FEATURE_LIGHT_SLEEP = false;           // CPU light sleep via idle hook + interrupt-driven touch (NEEDS REWORK: idle hook fires too aggressively, sleeps before setup/tasks complete, kills USB serial. Fix: add ready flag, delay hook registration, skip when USB connected via GPIO 5)
-constexpr bool FEATURE_IDLE_WIFI_DISCONNECT = true;   // Disconnect WiFi after idle timeout
-constexpr bool FEATURE_PMS150G_SHUTDOWN = false;      // Deep power-off via PMS150G after extended idle
-constexpr bool FEATURE_BATTERY_INDICATOR = false;     // On-screen battery percentage
-constexpr bool FEATURE_BMI270_SUSPEND = false;        // Put gyroscope in suspend mode on boot
 
-// Buttons configuration
-constexpr uint8_t BUTTON_BORDER_SIZE = 4;
-constexpr uint8_t BUTTON_SIZE = 100;
-constexpr uint8_t BUTTON_ICON_SIZE = 64;
-constexpr uint8_t SLIDER_OFFSET = 100;    // The zero is a bit on the right
-constexpr uint8_t TOUCH_AREA_MARGIN = 15; // A touch within 15px of the target is OK
+// --- WiFi Modem Sleep ---
+// Sleeps the WiFi radio between DTIM beacons while maintaining connection.
+constexpr bool FEATURE_WIFI_MODEM_SLEEP = true;
 
-// Home assistant configuration
-constexpr uint16_t HASS_MAX_JSON_BUFFER = 1024 * 20; // 20k, home assistant talks a lot
-constexpr uint32_t HASS_RECONNECT_DELAY_MS = 10000;
+// --- CPU Light Sleep ---
+// CPU enters light sleep via idle hook when all tasks are blocked.
+// Wakes on touch interrupt (GPIO 48) or timer.
+// NEEDS REWORK: idle hook fires too aggressively, sleeps before setup/tasks
+// complete, kills USB serial. Fix: add ready flag, delay hook registration,
+// skip when USB connected via GPIO 5.
+constexpr bool FEATURE_LIGHT_SLEEP = false;
+constexpr uint32_t SLEEP_WAKE_INTERVAL_MS = 5000;           // Timer wake interval for WebSocket servicing
 
-// When sending commands too fast (on a slider), this can flood
-// the zigbee network and make the commands fail. Increase this delay
-// if you see errors when using sliders.
-constexpr uint32_t HASS_TASK_SEND_DELAY_MS = 500;
+// --- Idle WiFi Disconnect ---
+// Disconnects WiFi after no touch for a configurable period.
+// Touch reconnects WiFi automatically.
+constexpr bool FEATURE_IDLE_WIFI_DISCONNECT = true;
+constexpr uint32_t IDLE_WIFI_DISCONNECT_MS = 30 * 1000;     // 30 seconds for testing (production: 5 * 60 * 1000)
 
-// When sending commands, we'll receive the updates from the server
-// with a delay. This causes jittering in the slider and unnecessary
-// commands sent to the server. We ignore updates from the server
-// during this delay after a command was sent on an entity.
-// FIXME: We can lose updates, we should have an authoritative value
-// and a target value in the store at some point.
-constexpr uint32_t HASS_IGNORE_UPDATE_DELAY_MS = 1000;
+// --- PMS150G Deep Power-Off ---
+// Powers off the entire device via PMS150G after extended idle.
+// RTC alarm wakes device periodically to refresh idle screen.
+// Button press wakes device for normal operation.
+constexpr bool FEATURE_PMS150G_SHUTDOWN = false;
+constexpr uint32_t PMS150G_SHUTDOWN_IDLE_MS = 2 * 60 * 1000; // 2 minutes for testing (production: 6UL * 60 * 60 * 1000)
+constexpr uint8_t PMS150G_RTC_WAKE_INTERVAL_MIN = 240;       // 4 hours between idle screen refreshes (max 255)
 
-// Battery monitoring
+// --- Battery Indicator ---
+// Shows battery percentage and charging status on screen.
+// Reads ADC every BATTERY_READ_INTERVAL_MS.
+constexpr bool FEATURE_BATTERY_INDICATOR = false;
 constexpr uint32_t BATTERY_READ_INTERVAL_MS = 5 * 60 * 1000; // 5 minutes
 constexpr uint8_t BATTERY_ADC_PIN = 3;
 constexpr uint8_t BATTERY_CHARGE_PIN = 4;
 constexpr float BATTERY_ADC_DIVIDER_RATIO = 2.0f;
 
-// Touch polling intervals
-constexpr uint32_t TOUCH_POLL_ACTIVE_MS = 25;
-constexpr uint32_t TOUCH_POLL_IDLE_MS = 500;
+// --- BMI270 Gyroscope Suspend ---
+// Puts the BMI270 IMU into suspend mode on boot (~3.5µA vs ~950µA).
+constexpr bool FEATURE_BMI270_SUSPEND = false;
 
-// Light sleep wake interval for servicing WebSocket when idle
-constexpr uint32_t SLEEP_WAKE_INTERVAL_MS = 5000;
-
-// Idle WiFi disconnect timeout (disconnect WiFi after no touch for this long)
-constexpr uint32_t IDLE_WIFI_DISCONNECT_MS = 30 * 1000; // 30 seconds (testing, change to 5 * 60 * 1000 for production)
-
-// PMS150G auto-shutdown (Phase 4 deep power-off)
-constexpr bool PMS150G_AUTO_SHUTDOWN_ENABLED = true;
-constexpr uint32_t PMS150G_SHUTDOWN_IDLE_MS = 6UL * 60 * 60 * 1000;  // 6 hours
-constexpr uint8_t PMS150G_RTC_WAKE_INTERVAL_MIN = 240;               // 4 hours (max 255)
-
-// Touch feedback
+// --- Buzzer Touch Feedback ---
+// Audible click on widget touch via onboard passive buzzer.
 constexpr bool BUZZER_FEEDBACK_ENABLED = true;
 constexpr uint16_t BUZZER_FREQ_HZ = 3000;
 constexpr uint8_t BUZZER_DURATION_MS = 15;
 
-// Other constants
+// ============================================================================
+// WIDGET / UI CONFIGURATION
+// ============================================================================
+constexpr uint8_t BUTTON_BORDER_SIZE = 4;
+constexpr uint8_t BUTTON_SIZE = 100;
+constexpr uint8_t BUTTON_ICON_SIZE = 64;
+constexpr uint8_t SLIDER_OFFSET = 100;                       // Slider zero offset from left edge
+constexpr uint8_t TOUCH_AREA_MARGIN = 15;                    // Touch hit area expansion (px)
+constexpr uint32_t DISPLAY_FULL_REDRAW_TIMEOUT_MS = 30000;   // Full refresh to clear ghosting
+
+// ============================================================================
+// HOME ASSISTANT CONFIGURATION
+// ============================================================================
+constexpr uint16_t HASS_MAX_JSON_BUFFER = 1024 * 20;         // 20KB buffer for HA WebSocket messages
+constexpr uint32_t HASS_RECONNECT_DELAY_MS = 10000;          // WebSocket reconnect interval
+constexpr uint32_t HASS_TASK_SEND_DELAY_MS = 500;            // Delay between commands (prevents Zigbee flooding)
+// FIXME: We can lose updates, we should have an authoritative value
+// and a target value in the store at some point.
+constexpr uint32_t HASS_IGNORE_UPDATE_DELAY_MS = 1000;       // Ignore server updates after sending a command
+
+// ============================================================================
+// OTHER CONSTANTS
+// ============================================================================
 constexpr size_t MAX_ENTITIES = 16;
 constexpr size_t MAX_WIDGETS_PER_SCREEN = 8;
 constexpr uint32_t TOUCH_RELEASE_TIMEOUT_MS = 50;
-constexpr uint32_t DISPLAY_FULL_REDRAW_TIMEOUT_MS = 30000;
+constexpr uint32_t TOUCH_POLL_ACTIVE_MS = 25;                // Touch polling while finger is down
+constexpr uint32_t TOUCH_POLL_IDLE_MS = 500;                 // Touch polling when idle (no FEATURE_LIGHT_SLEEP)
