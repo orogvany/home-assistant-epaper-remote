@@ -25,15 +25,15 @@ constexpr uint32_t SLEEP_WAKE_INTERVAL_MS = 5000;           // Timer wake interv
 // Disconnects WiFi after no touch for a configurable period.
 // Touch reconnects WiFi automatically.
 constexpr bool FEATURE_IDLE_WIFI_DISCONNECT = true;
-constexpr uint32_t IDLE_WIFI_DISCONNECT_MS = 30 * 1000;     // 30 seconds for testing (production: 5 * 60 * 1000)
+constexpr uint32_t IDLE_WIFI_DISCONNECT_MS = 5 * 60 * 1000;  // 5 minutes
 
 // --- PMS150G Deep Power-Off ---
 // Powers off the entire device via PMS150G after extended idle.
 // RTC alarm wakes device periodically to refresh idle screen.
 // Button press wakes device for normal operation.
-constexpr bool FEATURE_PMS150G_SHUTDOWN = false;
-constexpr uint32_t PMS150G_SHUTDOWN_IDLE_MS = 2 * 60 * 1000; // 2 minutes for testing (production: 6UL * 60 * 60 * 1000)
-constexpr uint8_t PMS150G_RTC_WAKE_INTERVAL_MIN = 240;       // 4 hours between idle screen refreshes (max 255)
+constexpr bool FEATURE_PMS150G_SHUTDOWN = true;
+constexpr uint32_t PMS150G_SHUTDOWN_IDLE_MS = 6UL * 60 * 60 * 1000; // 6 hours
+constexpr uint8_t PMS150G_RTC_WAKE_INTERVAL_MIN = 240;              // 4 hours (max 255)
 
 // --- Battery Indicator ---
 // Shows battery percentage and charging status on screen.
