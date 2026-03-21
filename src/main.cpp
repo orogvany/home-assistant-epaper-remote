@@ -68,15 +68,18 @@ void setup() {
         power_clear_rtc_flag();
         init_display(&epaper);
 
-        // Read RTC seconds (BCD-encoded, bit 7 = VL flag) for position offset
+        // Read RTC seconds + minutes (BCD-encoded) for position randomization
         Wire.beginTransmission(BM8563_ADDR);
-        Wire.write(0x02); // Seconds register
+        Wire.write(0x02); // Seconds register (minutes follows at 0x03)
         Wire.endTransmission(false);
-        Wire.requestFrom((uint8_t)BM8563_ADDR, (uint8_t)1);
-        uint8_t raw = Wire.available() ? Wire.read() : 0;
-        uint8_t rtc_sec = ((raw & 0x70) >> 4) * 10 + (raw & 0x0F);
-        int16_t offset_x = (int16_t)((rtc_sec * 7) % 100) - 50;
-        int16_t offset_y = (int16_t)((rtc_sec * 13) % 80) - 40;
+        Wire.requestFrom((uint8_t)BM8563_ADDR, (uint8_t)2);
+        uint8_t raw_sec = Wire.available() ? Wire.read() : 0;
+        uint8_t raw_min = Wire.available() ? Wire.read() : 0;
+        uint8_t rtc_sec = ((raw_sec & 0x70) >> 4) * 10 + (raw_sec & 0x0F);
+        uint8_t rtc_min = ((raw_min & 0x70) >> 4) * 10 + (raw_min & 0x0F);
+        uint16_t seed = rtc_sec + rtc_min * 60;
+        int16_t offset_x = (int16_t)((seed * 7) % 400) - 200;  // ±200px horizontal
+        int16_t offset_y = (int16_t)((seed * 13) % 300) - 150;  // ±150px vertical
 
         drawIdleScreen(&epaper, offset_x, offset_y);
 
@@ -96,6 +99,19 @@ void setup() {
     // Initialize objects
     store_init(&store);
     store_set_last_touch(&store, millis()); // Start idle timer from boot
+
+    // Read battery immediately so first screen draw has a real value
+    if (FEATURE_BATTERY_INDICATOR && HAS_BATTERY_ADC) {
+        pinMode(BATTERY_CHARGE_PIN, INPUT);
+        uint16_t raw_mv = analogReadMilliVolts(BATTERY_ADC_PIN);
+        uint16_t voltage_mv = (uint16_t)(raw_mv * BATTERY_ADC_DIVIDER_RATIO);
+        // Simple voltage-to-percentage (rough, battery task has full lookup table)
+        uint8_t pct = voltage_mv >= 4200 ? 100 : voltage_mv <= 3300 ? 0 : (voltage_mv - 3300) * 100 / 900;
+        bool charging = (digitalRead(BATTERY_CHARGE_PIN) == LOW);
+        store_set_battery(&store, voltage_mv, pct, charging);
+        Serial.printf("Battery initial: %d mV (%d%%)\n", voltage_mv, pct);
+    }
+
     ui_state_init(&shared_ui_state);
     configure_remote(&config, &store, &screen);
     initialize_slider_sprites();

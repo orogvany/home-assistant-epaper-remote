@@ -60,7 +60,7 @@ void drawBatteryIndicator(FASTEPD* epaper, uint8_t percentage, bool charging) {
     epaper->getStringBox(label, &text_rect);
 
     uint16_t total_w = BATT_ICON_W + BATT_TIP_W + 6 + text_rect.w;
-    uint16_t x = DISPLAY_HEIGHT - BATT_MARGIN - total_w;
+    uint16_t x = DISPLAY_WIDTH - BATT_MARGIN - total_w;
     uint16_t y = BATT_MARGIN;
 
     // Clear the area
@@ -90,26 +90,30 @@ void drawIdleScreen(FASTEPD* epaper, int16_t offset_x, int16_t offset_y) {
     epaper->setFont(Montserrat_Regular_26);
     epaper->setTextColor(BBEP_BLACK);
 
-    const char* line1 = "Press button";
-    const char* line2 = "to wake";
+    const char* line1 = "Sleeping";
+    const char* line2 = "Press button";
+    const char* line3 = "to wake";
 
-    BB_RECT r1, r2;
+    BB_RECT r1, r2, r3;
     epaper->getStringBox(line1, &r1);
     epaper->getStringBox(line2, &r2);
+    epaper->getStringBox(line3, &r3);
 
-    uint16_t total_h = r1.h + 10 + r2.h;
+    constexpr int16_t spacing = 10;
+    uint16_t total_h = r1.h + spacing + r2.h + spacing + r3.h;
     int16_t base_x = DISPLAY_WIDTH / 2;
     int16_t base_y = (DISPLAY_HEIGHT - total_h) / 2;
 
-    int16_t x1 = base_x - r1.w / 2 + offset_x;
     int16_t y1 = base_y + offset_y;
-    int16_t x2 = base_x - r2.w / 2 + offset_x;
-    int16_t y2 = y1 + r1.h + 10;
+    int16_t y2 = y1 + r1.h + spacing;
+    int16_t y3 = y2 + r2.h + spacing;
 
-    epaper->setCursor(std::max((int16_t)0, x1), std::max((int16_t)0, y1));
+    epaper->setCursor(std::max(0, (int)(base_x - r1.w / 2 + offset_x)), std::max(0, (int)y1));
     epaper->write(line1);
-    epaper->setCursor(std::max((int16_t)0, x2), std::max((int16_t)0, y2));
+    epaper->setCursor(std::max(0, (int)(base_x - r2.w / 2 + offset_x)), std::max(0, (int)y2));
     epaper->write(line2);
+    epaper->setCursor(std::max(0, (int)(base_x - r3.w / 2 + offset_x)), std::max(0, (int)y3));
+    epaper->write(line3);
 
     epaper->fullUpdate(CLEAR_SLOW, false);
 }
