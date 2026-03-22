@@ -88,8 +88,6 @@ using [fontconvert from FastEPD](https://github.com/bitbank2/FastEPD/tree/main/f
 
 [This project is released under Apache License 2.0.](./LICENSE)
 
-This repository contains resources from:
+See [NOTICE.md](./NOTICE.md) for full credits and third-party notices.
 
-- https://github.com/Templarian/MaterialDesign (Apache License 2.0)
-- https://github.com/JulietaUla/Montserrat (Apache License 2.0)
-- https://github.com/ugomeda/home-assistant-epaper-remote (Apache License 2.0)
+Note: This is vibe coded, dictated but not read.  Expect much AI Slop(tm).  Claude authored. YMMV.
