@@ -11,7 +11,7 @@
 #include <cstring>
 
 static const char* TAG = "ui";
-static const char* const TEXT_BOOT[] = {"Home Assistant", "e-paper remote", nullptr};
+static const char* const TEXT_BOOT[] = {"Loading...", nullptr};
 static const char* const TEXT_WIFI_DISCONNECTED[] = {"Not connected", "to Wifi", nullptr};
 static const char* const TEXT_HASS_DISCONNECTED[] = {"Not connected", "to Home Assistant", nullptr};
 static const char* const TEXT_HASS_INVALID_KEY[] = {"Cannot connect", "to Home Assistant:", "invalid token", nullptr};
