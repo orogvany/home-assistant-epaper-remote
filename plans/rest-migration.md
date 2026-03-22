@@ -216,13 +216,35 @@ Goal: Gear icon + settings menu on e-ink screen, prerequisite for captive portal
   - Starts web server for HA token/entity config
 - All screens use existing e-ink widget patterns (no LVGL)
 
-### Phase R5: Captive Portal
+**Status**: ✅ COMPLETE
+- ✅ Gear icon in bottom-right corner of main screen
+- ✅ Settings menu: Configure WiFi, Configure HA, About (About not yet implemented)
+- ✅ WiFi setup screen with AP name + captive portal instructions
+- ✅ HA setup screen with device IP + browser instructions
+- ✅ Back navigation from all screens
+- ✅ Buzzer feedback on all touches, debounced (single chirp)
+- ✅ UI mode override in store for screen switching
 
-- WiFi AP mode with web server
-- Entity discovery via `GET /api/states`
-- Configuration UI (HTML/JS served from ESP32)
-- Save to NVS
-- This eliminates recompile for config changes entirely
+### Phase R5: Captive Portal — IN PROGRESS
+
+WiFi provisioning and HA configuration via web browser.
+
+**WiFi Setup (via WiFiManager library)**:
+- Tapping "Configure WiFi" in settings starts WiFiManager AP ("HA-Remote")
+- User connects phone/laptop to AP, captive portal auto-opens
+- Select WiFi network, enter password, save
+- WiFiManager handles AP teardown + reconnect to selected network
+- On success: save creds to NVS via ConfigStore, return to main screen
+- On back/cancel: stop AP, return to settings menu
+
+**HA Setup (via built-in web server)**:
+- Tapping "Configure HA" starts web server on device's WiFi IP
+- E-ink screen shows "Open http://{ip}" instructions
+- Web page: enter HA URL + token, discover entities, configure widgets
+- Save to NVS via ConfigStore
+- On back: stop web server, return to settings menu
+
+**Reference**: `reference/HomeControl/src/ui/screens/admin_portal.cpp` for WiFiManager pattern
 
 ---
 
