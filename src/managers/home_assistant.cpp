@@ -10,6 +10,7 @@
 #include "managers/power.h"
 #include "store.h"
 #include <FastEPD.h>
+#include <HTTPClient.h>
 #include <WiFi.h>
 #include <WebSocketsClient.h>
 #include <cJSON.h>
@@ -226,16 +227,22 @@ static void hass_ws_event_handler(WStype_t type, uint8_t* payload, size_t length
 
     switch (type) {
     case WStype_CONNECTED:
-        ESP_LOGI(TAG, "WebSocket connected");
+        ESP_LOGI(TAG, "WebSocket connected to %s:%d%s",
+                 hass->ws_host.c_str(), hass->ws_port, hass->ws_path.c_str());
         break;
     case WStype_DISCONNECTED:
-        // Don't update UI if this is an intentional idle disconnect (Phase 3)
         if (store_get_wifi_idle(hass->store)) {
             ESP_LOGI(TAG, "WebSocket disconnected (idle, no UI update)");
         } else {
             ESP_LOGI(TAG, "WebSocket disconnected");
             hass_update_state(hass, ConnState::ConnectionError);
         }
+        break;
+    case WStype_ERROR:
+        ESP_LOGE(TAG, "WebSocket error connecting to %s:%d%s: %s",
+                 hass->ws_host.c_str(), hass->ws_port, hass->ws_path.c_str(),
+                 (payload && length > 0) ? (const char*)payload : "no details");
+        hass_update_state(hass, ConnState::ConnectionError);
         break;
     case WStype_TEXT: {
         cJSON* json = cJSON_ParseWithLength((const char*)payload, length);
@@ -247,10 +254,6 @@ static void hass_ws_event_handler(WStype_t type, uint8_t* payload, size_t length
         }
         break;
     }
-    case WStype_ERROR:
-        ESP_LOGI(TAG, "WebSocket error");
-        hass_update_state(hass, ConnState::ConnectionError);
-        break;
     default:
         break;
     }
@@ -421,7 +424,29 @@ void home_assistant_task(void* arg) {
 
     ESP_LOGI(TAG, "Waiting for wifi...");
     store_wait_for_wifi_up(store);
-    ESP_LOGI(TAG, "Wifi is up, connecting...");
+    ESP_LOGI(TAG, "Wifi is up, connecting to %s...", ctx->config->home_assistant_url);
+
+    // Quick HTTP connectivity check before attempting WebSocket
+    {
+        HTTPClient http;
+        String api_url = String("http://") + ctx->config->home_assistant_url;
+        // Convert ws:// URL to http:// for REST check
+        api_url = String("http://");
+        // Parse host:port from the ws URL
+        String ws_url(ctx->config->home_assistant_url);
+        if (ws_url.startsWith("ws://")) ws_url = ws_url.substring(5);
+        else if (ws_url.startsWith("wss://")) ws_url = ws_url.substring(6);
+        int path_idx = ws_url.indexOf('/');
+        String host_port = (path_idx > 0) ? ws_url.substring(0, path_idx) : ws_url;
+        api_url = String("http://") + host_port + "/api/";
+
+        ESP_LOGI(TAG, "Testing REST API at %s", api_url.c_str());
+        http.begin(api_url);
+        http.addHeader("Authorization", String("Bearer ") + ctx->config->home_assistant_token);
+        int httpCode = http.GET();
+        ESP_LOGI(TAG, "REST API response: %d — %s", httpCode, http.getString().c_str());
+        http.end();
+    }
 
     home_assistant_context_t* hass = new home_assistant_context_t{};
     hass->store = store;
@@ -448,7 +473,12 @@ void home_assistant_task(void* arg) {
     bool wifi_is_off = false;
 
     while (1) {
-        ulTaskNotifyTake(pdTRUE, pdMS_TO_TICKS(SLEEP_WAKE_INTERVAL_MS));
+        // Poll quickly during connection/reconnection, slow down once connected
+        xSemaphoreTake(hass->mutex, portMAX_DELAY);
+        bool is_connected = (hass->state == ConnState::Up);
+        xSemaphoreGive(hass->mutex);
+        uint32_t wait_ms = is_connected ? SLEEP_WAKE_INTERVAL_MS : 100;
+        ulTaskNotifyTake(pdTRUE, pdMS_TO_TICKS(wait_ms));
 
         // Phase 3: Check if touch woke us from idle WiFi disconnect
         if (FEATURE_IDLE_WIFI_DISCONNECT && wifi_is_off && !store_get_wifi_idle(store)) {
