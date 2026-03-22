@@ -16,6 +16,7 @@ enum class UiMode : uint8_t {
     SettingsMenu,
     WifiSetup,
     HaSetup,
+    About,
 };
 
 struct UIState {

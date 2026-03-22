@@ -216,6 +216,57 @@ void drawHaSetupScreen(FASTEPD* epaper, const char* device_ip) {
     epaper->write(url);
 }
 
+void drawAboutScreen(FASTEPD* epaper, const char* version, const char* wifi_ssid,
+                     const char* ha_url, bool ha_connected, uint8_t battery_pct) {
+    epaper->setFont(Montserrat_Regular_26);
+    epaper->setTextColor(BBEP_BLACK);
+
+    // Back button
+    epaper->setCursor(SETTINGS_ITEM_MARGIN, 40);
+    epaper->write("< Back");
+
+    // Title
+    BB_RECT rect;
+    epaper->getStringBox("About", &rect);
+    epaper->setCursor(DISPLAY_WIDTH - SETTINGS_ITEM_MARGIN - rect.w, 40);
+    epaper->write("About");
+
+    // Info lines
+    uint16_t y = 130;
+    constexpr uint16_t line_h = 45;
+
+    char buf[128];
+
+    snprintf(buf, sizeof(buf), "Version: %s", version);
+    epaper->setCursor(SETTINGS_ITEM_MARGIN, y);
+    epaper->write(buf);
+    y += line_h;
+
+    snprintf(buf, sizeof(buf), "WiFi: %s", wifi_ssid);
+    epaper->setCursor(SETTINGS_ITEM_MARGIN, y);
+    epaper->write(buf);
+    y += line_h;
+
+    snprintf(buf, sizeof(buf), "HA: %s", ha_connected ? "Connected" : "Disconnected");
+    epaper->setCursor(SETTINGS_ITEM_MARGIN, y);
+    epaper->write(buf);
+    y += line_h;
+
+    snprintf(buf, sizeof(buf), "IP: %s", ha_url);
+    epaper->setCursor(SETTINGS_ITEM_MARGIN, y);
+    epaper->write(buf);
+    y += line_h;
+
+    snprintf(buf, sizeof(buf), "Battery: %d%%", battery_pct);
+    epaper->setCursor(SETTINGS_ITEM_MARGIN, y);
+    epaper->write(buf);
+    y += line_h;
+
+    snprintf(buf, sizeof(buf), "Build: %s", __DATE__);
+    epaper->setCursor(SETTINGS_ITEM_MARGIN, y);
+    epaper->write(buf);
+}
+
 void drawIdleScreen(FASTEPD* epaper, int16_t offset_x, int16_t offset_y) {
     epaper->setMode(BB_MODE_4BPP);
     epaper->fillScreen(0xf);

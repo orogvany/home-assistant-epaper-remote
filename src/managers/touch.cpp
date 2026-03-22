@@ -94,6 +94,7 @@ void touch_task(void* arg) {
                     store_set_ui_mode_override(store, UiMode::HaSetup);
                 } else if (item == 2) {
                     ESP_LOGI(TAG, "Settings: About");
+                    store_set_ui_mode_override(store, UiMode::About);
                 } else if (item == -1) {
                     ESP_LOGI(TAG, "Settings: Back to main");
                     store_set_ui_mode_override(store, UiMode::Blank);
@@ -109,6 +110,18 @@ void touch_task(void* arg) {
                     }
                     ESP_LOGI(TAG, "WiFi Setup: Back to settings");
                     wifi_portal_stop();
+                    store_set_ui_mode_override(store, UiMode::SettingsMenu);
+                }
+                continue;
+            }
+
+            if (ui_state->mode == UiMode::About && !touching) {
+                touching = true;
+                if (ti.x[0] < 200 && ti.y[0] < 80) {
+                    if (BUZZER_FEEDBACK_ENABLED && BUZZER_PIN) {
+                        tone(BUZZER_PIN, BUZZER_FREQ_HZ, BUZZER_DURATION_MS);
+                    }
+                    ESP_LOGI(TAG, "About: Back to settings");
                     store_set_ui_mode_override(store, UiMode::SettingsMenu);
                 }
                 continue;

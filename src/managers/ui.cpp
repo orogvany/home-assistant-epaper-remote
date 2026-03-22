@@ -6,6 +6,7 @@
 #include "store.h"
 #include "wake_lock.h"
 #include "widgets/Widget.h"
+#include <WiFi.h>
 #include <algorithm>
 #include <cstring>
 
@@ -108,6 +109,13 @@ void ui_task(void* arg) {
                     ctx->epaper->backupPlane();
                 } else if (current_state.mode == UiMode::SettingsMenu) {
                     drawSettingsMenu(ctx->epaper);
+                    ctx->epaper->fullUpdate(CLEAR_SLOW, false);
+                } else if (current_state.mode == UiMode::About) {
+                    drawAboutScreen(ctx->epaper, "0.2.0",
+                        WiFi.status() == WL_CONNECTED ? WiFi.SSID().c_str() : "Not connected",
+                        ctx->ha_url[0] ? ctx->ha_url : "Not configured",
+                        ctx->store->home_assistant == ConnState::Up,
+                        current_state.battery_percentage);
                     ctx->epaper->fullUpdate(CLEAR_SLOW, false);
                 } else if (current_state.mode == UiMode::WifiSetup) {
                     drawWifiSetupScreen(ctx->epaper, "HA-Remote");

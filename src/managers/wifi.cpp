@@ -33,5 +33,13 @@ void launch_wifi(Configuration* config, EntityStore* store) {
         WiFi.setSleep(WIFI_PS_MIN_MODEM);
     }
     WiFi.setAutoReconnect(true);
-    WiFi.begin(config->wifi_ssid, config->wifi_password);
+
+    // If creds are configured, use them. Otherwise try saved creds (from WiFiManager portal)
+    if (config->wifi_ssid[0] != '\0') {
+        ESP_LOGI(TAG, "Connecting to WiFi: %s", config->wifi_ssid);
+        WiFi.begin(config->wifi_ssid, config->wifi_password);
+    } else {
+        ESP_LOGI(TAG, "No hardcoded WiFi — trying saved credentials");
+        WiFi.begin();
+    }
 }

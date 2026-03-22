@@ -110,23 +110,13 @@ void store_update_ui_state(EntityStore* store, const Screen* screen, UIState* ui
     // Check for UI mode override (settings menu, setup screens, etc.)
     if (store->ui_mode_override != UiMode::Blank) {
         ui_state->mode = store->ui_mode_override;
-    } else if (store->wifi == ConnState::Up && store->home_assistant == ConnState::Up) {
-        ui_state->mode = UiMode::MainScreen;
-    } else if (store->wifi == ConnState::Initializing) {
-        ui_state->mode = UiMode::Boot;
-    } else if (store->wifi == ConnState::InvalidCredentials) {
-        // Should not happen
-        ui_state->mode = UiMode::WifiDisconnected;
-    } else if (store->wifi == ConnState::ConnectionError) {
-        ui_state->mode = UiMode::WifiDisconnected;
-    } else if (store->home_assistant == ConnState::Initializing) {
-        ui_state->mode = UiMode::Boot;
-    } else if (store->home_assistant == ConnState::InvalidCredentials) {
-        ui_state->mode = UiMode::HassInvalidKey;
-    } else if (store->home_assistant == ConnState::ConnectionError) {
-        ui_state->mode = UiMode::HassDisconnected;
+    } else if (store->wifi == ConnState::Initializing &&
+               store->home_assistant == ConnState::Initializing) {
+        ui_state->mode = UiMode::Boot; // Only show boot screen on initial startup
     } else {
-        ui_state->mode = UiMode::GenericError;
+        // Always show main screen — gear icon lets user access settings
+        // Connection status will be shown via status icons (TODO)
+        ui_state->mode = UiMode::MainScreen;
     }
 
     for (uint8_t widget_idx = 0; widget_idx < screen->widget_count; widget_idx++) {

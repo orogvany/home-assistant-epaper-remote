@@ -122,9 +122,16 @@ void ha_rest_manager_task(void* arg) {
     HARestManagerArgs* ctx = static_cast<HARestManagerArgs*>(arg);
     EntityStore* store = ctx->store;
 
-    ESP_LOGI(TAG, "Waiting for WiFi...");
-    store_wait_for_wifi_up(store);
-    ESP_LOGI(TAG, "WiFi is up");
+    // Wait for WiFi with timeout — don't block forever on bad/missing creds
+    ESP_LOGI(TAG, "Waiting for WiFi (10s timeout)...");
+    EventBits_t bits = xEventGroupWaitBits(store->event_group, BIT_WIFI_UP,
+                                            pdFALSE, pdTRUE, pdMS_TO_TICKS(10000));
+    if (!(bits & BIT_WIFI_UP)) {
+        ESP_LOGE(TAG, "WiFi connection timed out — check settings");
+        store_set_hass_state(store, ConnState::ConnectionError);
+    } else {
+        ESP_LOGI(TAG, "WiFi is up");
+    }
 
     // Initialize REST client
     HAConfig ha_config = {

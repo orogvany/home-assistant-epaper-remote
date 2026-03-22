@@ -9,6 +9,7 @@ struct UITaskArgs {
     Screen* screen;
     FASTEPD* epaper;
     SharedUIState* shared_state;
+    const char* ha_url; // For About screen display
 };
 
 void ui_task(void* arg);
