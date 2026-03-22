@@ -38,18 +38,36 @@ void touch_task(void* arg) {
     uint8_t widget_original_value = 0;
     uint8_t widget_current_value = 0;
 
+    // Proper GT911 reset sequence with I2C address selection via INT pin
+    // Per GT911 Programming Guide: INT pin state during RST release selects address
+    // INT LOW = 0x5D (default), INT HIGH = 0x14
+    ESP_LOGI(TAG, "Performing GT911 hardware reset...");
+    pinMode(TOUCH_INT, OUTPUT);
+    pinMode(TOUCH_RST, OUTPUT);
+    digitalWrite(TOUCH_INT, LOW);   // Select address 0x5D
+    digitalWrite(TOUCH_RST, LOW);   // Assert reset
+    vTaskDelay(pdMS_TO_TICKS(20));
+    digitalWrite(TOUCH_RST, HIGH);  // Release reset
+    vTaskDelay(pdMS_TO_TICKS(100));
+    pinMode(TOUCH_INT, INPUT);      // INT back to input for touch detection
+    vTaskDelay(pdMS_TO_TICKS(100));
+
+    // Wait for GT911 to fully stabilize before I2C init
+    vTaskDelay(pdMS_TO_TICKS(500));
+
     ESP_LOGI(TAG, "Initializing touchscreen...");
     int rc = -1;
-    for (int attempt = 0; attempt < 20 && rc <= 0; attempt++) {
+    int type = 0;
+    for (int attempt = 0; attempt < 20; attempt++) {
         if (attempt > 0) {
-            ESP_LOGI(TAG, "Retrying touch init (attempt %d)...", attempt + 1);
-            vTaskDelay(pdMS_TO_TICKS(200));
+            vTaskDelay(pdMS_TO_TICKS(500));
         }
         rc = bbct->init(TOUCH_SDA, TOUCH_SCL, TOUCH_RST, TOUCH_INT);
+        type = bbct->sensorType();
+        ESP_LOGI(TAG, "Attempt %d: init rc=%d, sensorType=%d", attempt + 1, rc, type);
+        if (type != 0) break; // GT911 detected
     }
-    ESP_LOGI(TAG, "init() rc = %d", rc);
-    int type = bbct->sensorType();
-    ESP_LOGI(TAG, "Sensor type = %d", type);
+    ESP_LOGI(TAG, "Touch init complete: rc=%d, sensorType=%d", rc, type);
 
     store->touch_ready = true;
 
