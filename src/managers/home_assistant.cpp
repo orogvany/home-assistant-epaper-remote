@@ -104,6 +104,14 @@ void hass_parse_entity_update(home_assistant_context_t* hass, uint8_t widget_idx
                    strcmp(state->valuestring, "idle") == 0 ||
                    strcmp(state->valuestring, "closed") == 0) {
             hass->entity_states[widget_idx] = false;
+        } else {
+            // Try parsing as numeric state (e.g., input_number: "52.0")
+            char* endptr;
+            double numeric = strtod(state->valuestring, &endptr);
+            if (endptr != state->valuestring && *endptr == '\0') {
+                hass->entity_states[widget_idx] = true;
+                hass->entity_values[widget_idx] = (int8_t)numeric;
+            }
         }
     }
 
