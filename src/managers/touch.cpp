@@ -76,8 +76,52 @@ void touch_task(void* arg) {
 
             ui_state_copy(ctx->state, &ui_state_version, ui_state);
 
-            // Handle touches based on current screen mode
-            // All non-widget screens: only respond to initial touch (debounce)
+            // --- PIN Entry ---
+            if (ui_state->mode == UiMode::PinEntry && !touching) {
+                touching = true;
+                static char pin_buf[5] = {};
+                static int pin_len = 0;
+
+                int key = getPinPadTouched(ti.x[0], ti.y[0]);
+                if (key >= 0 && key <= 9 && pin_len < 4) {
+                    if (BUZZER_FEEDBACK_ENABLED && BUZZER_PIN) {
+                        tone(BUZZER_PIN, BUZZER_FREQ_HZ, BUZZER_DURATION_MS);
+                    }
+                    pin_buf[pin_len++] = '0' + key;
+                    pin_buf[pin_len] = '\0';
+                    store->pin_wrong = false;
+                    store->pin_digits_entered = pin_len;
+
+                    if (pin_len == 4) {
+                        const AppConfig& cfg = ctx->config_store->config();
+                        if (strcmp(pin_buf, cfg.pin_code) == 0) {
+                            ESP_LOGI(TAG, "PIN correct");
+                            pin_len = 0;
+                            store->pin_digits_entered = 0;
+                            store_set_ui_mode_override(store, UiMode::SettingsMenu);
+                        } else {
+                            ESP_LOGI(TAG, "PIN incorrect");
+                            pin_len = 0;
+                            store->pin_digits_entered = 0;
+                            store->pin_wrong = true;
+                            xTaskNotifyGive(store->ui_task); // Force redraw with "Wrong PIN"
+                        }
+                    } else {
+                        xTaskNotifyGive(store->ui_task); // Redraw dots
+                    }
+                } else if (key == 10 && pin_len > 0) {
+                    if (BUZZER_FEEDBACK_ENABLED && BUZZER_PIN) {
+                        tone(BUZZER_PIN, BUZZER_FREQ_HZ, BUZZER_DURATION_MS);
+                    }
+                    pin_buf[--pin_len] = '\0';
+                    store->pin_digits_entered = pin_len;
+                    store->pin_wrong = false;
+                    xTaskNotifyGive(store->ui_task);
+                }
+                continue;
+            }
+
+            // --- Settings Menu ---
             if (ui_state->mode == UiMode::SettingsMenu && !touching) {
                 touching = true;
                 int item = getSettingsMenuItemTouched(ti.x[0], ti.y[0]);
@@ -149,11 +193,16 @@ void touch_task(void* arg) {
             // Check gear icon touch (main screen only, initial touch only)
             if (!touching && isGearIconTouched(ti.x[0], ti.y[0])) {
                 touching = true;
-                ESP_LOGI(TAG, "Gear icon tapped - opening settings");
+                ESP_LOGI(TAG, "Gear icon tapped");
                 if (BUZZER_FEEDBACK_ENABLED && BUZZER_PIN) {
                     tone(BUZZER_PIN, BUZZER_FREQ_HZ, BUZZER_DURATION_MS);
                 }
-                store_set_ui_mode_override(store, UiMode::SettingsMenu);
+                const AppConfig& cfg = ctx->config_store->config();
+                if (cfg.pin_enabled) {
+                    store_set_ui_mode_override(store, UiMode::PinEntry);
+                } else {
+                    store_set_ui_mode_override(store, UiMode::SettingsMenu);
+                }
                 continue;
             }
 

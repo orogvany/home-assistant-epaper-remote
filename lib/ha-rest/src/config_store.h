@@ -53,6 +53,10 @@ struct AppConfig {
     UIDevice ui_devices[MAX_UI_DEVICES];
     int ui_device_count;
 
+    // Security
+    bool pin_enabled;
+    char pin_code[5];         // 4-digit PIN + null terminator
+
     // Flags
     bool configured;          // Has the user gone through setup?
 };

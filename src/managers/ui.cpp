@@ -107,6 +107,9 @@ void ui_task(void* arg) {
                     ctx->epaper->fillScreen(BBEP_WHITE);
                     ui_main_screen_full_draw(&displayed_state, BitDepth::BD_1BPP, ctx->screen, ctx->epaper);
                     ctx->epaper->backupPlane();
+                } else if (current_state.mode == UiMode::PinEntry) {
+                    drawPinEntryScreen(ctx->epaper, current_state.pin_digits_entered, current_state.pin_wrong);
+                    ctx->epaper->fullUpdate(CLEAR_SLOW, false);
                 } else if (current_state.mode == UiMode::SettingsMenu) {
                     drawSettingsMenu(ctx->epaper);
                     ctx->epaper->fullUpdate(CLEAR_SLOW, false);

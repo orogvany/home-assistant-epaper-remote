@@ -78,7 +78,16 @@ static const char CONFIG_PAGE[] PROGMEM = R"rawliteral(
     <input type="number" id="poll_interval" value="10" min="1" max="300">
     <label>WiFi Idle Disconnect (minutes)</label>
     <input type="number" id="idle_disconnect" value="5" min="1" max="60">
-    <button class="btn" onclick="saveConfig()">Save Connection Settings</button>
+
+    <h2>Security</h2>
+    <label>PIN Lock</label>
+    <select id="pin_enabled">
+        <option value="1">Enabled</option>
+        <option value="0">Disabled</option>
+    </select>
+    <label>PIN Code (4 digits)</label>
+    <input type="text" id="pin_code" maxlength="4" pattern="[0-9]{4}" placeholder="1234">
+    <button class="btn" onclick="saveConfig()">Save Settings</button>
     <div id="config-status"></div>
 
     <h2>My Devices</h2>
@@ -142,6 +151,8 @@ static const char CONFIG_PAGE[] PROGMEM = R"rawliteral(
         document.getElementById('ha_token').value = cfg.ha_token || '';
         document.getElementById('poll_interval').value = (cfg.poll_interval_ms || 10000) / 1000;
         document.getElementById('idle_disconnect').value = (cfg.idle_wifi_disconnect_ms || 300000) / 60000;
+        document.getElementById('pin_enabled').value = cfg.pin_enabled ? '1' : '0';
+        document.getElementById('pin_code').value = cfg.pin_code || '1234';
     }).catch(e => msg('config-status', 'Failed to load config', true));
 
     // Load active devices
@@ -163,7 +174,9 @@ static const char CONFIG_PAGE[] PROGMEM = R"rawliteral(
                 ha_url: document.getElementById('ha_url').value,
                 ha_token: document.getElementById('ha_token').value,
                 poll_interval_ms: parseInt(document.getElementById('poll_interval').value) * 1000,
-                idle_wifi_disconnect_ms: parseInt(document.getElementById('idle_disconnect').value) * 60000
+                idle_wifi_disconnect_ms: parseInt(document.getElementById('idle_disconnect').value) * 60000,
+                pin_enabled: document.getElementById('pin_enabled').value === '1',
+                pin_code: document.getElementById('pin_code').value
             })
         }).then(r=>r.json()).then(r => msg('config-status', r.message||'Saved!', false))
           .catch(e => msg('config-status', 'Save failed', true));
@@ -292,6 +305,8 @@ static void handle_get_config() {
     doc["poll_interval_ms"] = cfg.poll_interval_ms;
     doc["idle_wifi_disconnect_ms"] = cfg.idle_wifi_disconnect_ms;
     doc["pms150g_shutdown_idle_ms"] = cfg.pms150g_shutdown_idle_ms;
+    doc["pin_enabled"] = cfg.pin_enabled;
+    doc["pin_code"] = cfg.pin_code;
 
     String json;
     serializeJson(doc, json);
@@ -324,6 +339,12 @@ static void handle_post_config() {
     }
     if (doc.containsKey("idle_wifi_disconnect_ms")) {
         cfg.idle_wifi_disconnect_ms = doc["idle_wifi_disconnect_ms"] | 300000;
+    }
+    if (doc.containsKey("pin_enabled")) {
+        cfg.pin_enabled = doc["pin_enabled"] | true;
+    }
+    if (doc.containsKey("pin_code")) {
+        strlcpy(cfg.pin_code, doc["pin_code"] | "1234", sizeof(cfg.pin_code));
     }
 
     cfg.configured = true;

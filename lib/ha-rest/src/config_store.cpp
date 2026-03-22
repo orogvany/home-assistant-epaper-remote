@@ -24,6 +24,8 @@ void ConfigStore::_applyDefaults() {
     _config.idle_wifi_disconnect_ms = 5 * 60 * 1000;
     _config.pms150g_shutdown_idle_ms = 6UL * 60 * 60 * 1000;
     _config.pms150g_rtc_wake_min = 240;
+    _config.pin_enabled = true;
+    strlcpy(_config.pin_code, "1234", sizeof(_config.pin_code));
     _config.configured = false;
 }
 
@@ -137,6 +139,8 @@ bool ConfigStore::_serializeToJson(String& output) {
     settings["idle_wifi_disconnect_ms"] = _config.idle_wifi_disconnect_ms;
     settings["pms150g_shutdown_idle_ms"] = _config.pms150g_shutdown_idle_ms;
     settings["pms150g_rtc_wake_min"] = _config.pms150g_rtc_wake_min;
+    settings["pin_enabled"] = _config.pin_enabled;
+    settings["pin_code"] = _config.pin_code;
 
     // Known devices
     JsonArray known = doc["known_devices"].to<JsonArray>();
@@ -191,6 +195,8 @@ bool ConfigStore::_deserializeFromJson(const char* json, size_t len) {
     _config.idle_wifi_disconnect_ms = doc["settings"]["idle_wifi_disconnect_ms"] | (5 * 60 * 1000);
     _config.pms150g_shutdown_idle_ms = doc["settings"]["pms150g_shutdown_idle_ms"] | (6UL * 60 * 60 * 1000);
     _config.pms150g_rtc_wake_min = doc["settings"]["pms150g_rtc_wake_min"] | 240;
+    _config.pin_enabled = doc["settings"]["pin_enabled"] | true;
+    strlcpy(_config.pin_code, doc["settings"]["pin_code"] | "1234", sizeof(_config.pin_code));
 
     // Known devices
     JsonArray known = doc["known_devices"];

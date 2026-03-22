@@ -11,7 +11,8 @@ It uses the REST API of Home Assistant, no plugin is required on the server.
 - [Lilygo T5 E-Paper S3 Pro](https://lilygo.cc/products/t5-e-paper-s3-pro)
 - [M5Stack M5Paper S3](https://docs.m5stack.com/en/core/PaperS3)
 
-Note: this is really only tested and developed for the M5Paper S3, lilygo may work, but its diverged quite a bit from when it was tested.
+Note: this is really only tested and developed for the M5Paper S3, lilygo may work, but its diverged quite a bit from
+when it was tested.
 
 ## Setup
 
@@ -71,11 +72,13 @@ pio run -e lilygo-t5-s3 --target upload
 - Toggle button widgets for switches and automations
 - Partial display updates for responsive touch interaction
 - Better power management for long battery life
-- Captive portal for WIFI connection and Web driven configuration
+- Captive portal for WIFI connection and Web driven configuration for device discovery and management
+- Optional pin gating for configuration (default:1234)
 
 ### Updating the font
 
-The font used is Montserrat Regular in size 26, it was converted using [fontconvert from FastEPD](https://github.com/bitbank2/FastEPD/tree/main/fontconvert):
+The font used is Montserrat Regular in size 26, it was converted
+using [fontconvert from FastEPD](https://github.com/bitbank2/FastEPD/tree/main/fontconvert):
 
 ```
 ./fontconvert Montserrat-Regular.ttf `src/assets/Montserrat_Regular_26.h` 26 32 126

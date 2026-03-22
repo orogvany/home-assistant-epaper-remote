@@ -14,8 +14,9 @@ enum class UiMode : uint8_t {
     HassInvalidKey,
     MainScreen,
     SettingsMenu,
+    PinEntry,
     WifiSetup,
-    Configure,  // Web server running for general configuration
+    Configure,
     About,
 };
 
@@ -24,6 +25,8 @@ struct UIState {
     uint8_t widget_values[MAX_WIDGETS_PER_SCREEN] = {};
     uint8_t battery_percentage = 0;
     bool battery_charging = false;
+    uint8_t pin_digits_entered = 0;
+    bool pin_wrong = false;
 };
 
 // The touch task needs to know the current state of the UI.

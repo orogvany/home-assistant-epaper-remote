@@ -261,6 +261,79 @@ void drawAboutScreen(FASTEPD* epaper, const char* version, const char* wifi_ssid
     epaper->write(buf);
 }
 
+// PIN pad layout constants
+constexpr uint16_t PIN_PAD_X = 120;
+constexpr uint16_t PIN_PAD_Y = 300;
+constexpr uint16_t PIN_BTN_W = 90;
+constexpr uint16_t PIN_BTN_H = 70;
+constexpr uint16_t PIN_BTN_GAP = 10;
+constexpr uint16_t PIN_DOT_Y = 200;
+constexpr uint16_t PIN_DOT_R = 15;
+constexpr uint16_t PIN_DOT_GAP = 30;
+
+void drawPinEntryScreen(FASTEPD* epaper, int digits_entered, bool wrong_pin) {
+    epaper->setFont(Montserrat_Regular_26);
+    epaper->setTextColor(BBEP_BLACK);
+
+    // Title
+    BB_RECT rect;
+    const char* title = wrong_pin ? "Wrong PIN" : "Enter PIN";
+    epaper->getStringBox(title, &rect);
+    epaper->setCursor((DISPLAY_WIDTH - rect.w) / 2, 120);
+    epaper->write(title);
+
+    // 4 indicator dots/squares
+    uint16_t dots_total_w = 4 * PIN_DOT_R * 2 + 3 * PIN_DOT_GAP;
+    uint16_t dot_x = (DISPLAY_WIDTH - dots_total_w) / 2;
+    for (int i = 0; i < 4; i++) {
+        uint16_t cx = dot_x + i * (PIN_DOT_R * 2 + PIN_DOT_GAP) + PIN_DOT_R;
+        if (i < digits_entered) {
+            epaper->fillCircle(cx, PIN_DOT_Y, PIN_DOT_R, BBEP_BLACK);
+        } else {
+            epaper->drawCircle(cx, PIN_DOT_Y, PIN_DOT_R, BBEP_BLACK);
+        }
+    }
+
+    // Number pad: 1-9 in 3x3 grid, then < 0 (enter) on bottom row
+    const char* labels[] = {"1","2","3","4","5","6","7","8","9","<","0",""};
+    for (int row = 0; row < 4; row++) {
+        for (int col = 0; col < 3; col++) {
+            int idx = row * 3 + col;
+            if (labels[idx][0] == '\0') continue; // Empty slot
+
+            uint16_t bx = PIN_PAD_X + col * (PIN_BTN_W + PIN_BTN_GAP);
+            uint16_t by = PIN_PAD_Y + row * (PIN_BTN_H + PIN_BTN_GAP);
+
+            epaper->drawRect(bx, by, PIN_BTN_W, PIN_BTN_H, BBEP_BLACK);
+
+            epaper->getStringBox(labels[idx], &rect);
+            epaper->setCursor(bx + (PIN_BTN_W - rect.w) / 2,
+                              by + (PIN_BTN_H + rect.h) / 2 - 4);
+            epaper->write(labels[idx]);
+        }
+    }
+}
+
+int getPinPadTouched(uint16_t touch_x, uint16_t touch_y) {
+    // Map: 0=1, 1=2, 2=3, 3=4, 4=5, 5=6, 6=7, 7=8, 8=9, 9=<(delete), 10=0
+    const int values[] = {1,2,3,4,5,6,7,8,9,10,0,-1};
+    for (int row = 0; row < 4; row++) {
+        for (int col = 0; col < 3; col++) {
+            int idx = row * 3 + col;
+            if (values[idx] == -1) continue;
+
+            uint16_t bx = PIN_PAD_X + col * (PIN_BTN_W + PIN_BTN_GAP);
+            uint16_t by = PIN_PAD_Y + row * (PIN_BTN_H + PIN_BTN_GAP);
+
+            if (touch_x >= bx && touch_x < bx + PIN_BTN_W &&
+                touch_y >= by && touch_y < by + PIN_BTN_H) {
+                return values[idx]; // 0-9 = digit, 10 = delete
+            }
+        }
+    }
+    return -1;
+}
+
 void drawIdleScreen(FASTEPD* epaper, int16_t offset_x, int16_t offset_y) {
     epaper->setMode(BB_MODE_4BPP);
     epaper->fillScreen(0xf);

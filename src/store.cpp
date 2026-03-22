@@ -126,6 +126,8 @@ void store_update_ui_state(EntityStore* store, const Screen* screen, UIState* ui
 
     ui_state->battery_percentage = store->battery.percentage;
     ui_state->battery_charging = store->battery.charging;
+    ui_state->pin_digits_entered = store->pin_digits_entered;
+    ui_state->pin_wrong = store->pin_wrong;
 
     xSemaphoreGive(store->mutex);
 }
