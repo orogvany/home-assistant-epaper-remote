@@ -75,8 +75,15 @@ void touch_task(void* arg) {
             ui_state_copy(ctx->state, &ui_state_version, ui_state);
 
             // Handle touches based on current screen mode
-            if (ui_state->mode == UiMode::SettingsMenu) {
+            // All non-widget screens: only respond to initial touch (debounce)
+            if (ui_state->mode == UiMode::SettingsMenu && !touching) {
+                touching = true;
                 int item = getSettingsMenuItemTouched(ti.x[0], ti.y[0]);
+                if (item >= -1) {
+                    if (BUZZER_FEEDBACK_ENABLED && BUZZER_PIN) {
+                        tone(BUZZER_PIN, BUZZER_FREQ_HZ, BUZZER_DURATION_MS);
+                    }
+                }
                 if (item == 0) {
                     ESP_LOGI(TAG, "Settings: Configure WiFi");
                     store_set_ui_mode_override(store, UiMode::WifiSetup);
@@ -85,17 +92,19 @@ void touch_task(void* arg) {
                     store_set_ui_mode_override(store, UiMode::HaSetup);
                 } else if (item == 2) {
                     ESP_LOGI(TAG, "Settings: About");
-                    // TODO: About screen
                 } else if (item == -1) {
                     ESP_LOGI(TAG, "Settings: Back to main");
-                    store_set_ui_mode_override(store, UiMode::Blank); // Clear override
+                    store_set_ui_mode_override(store, UiMode::Blank);
                 }
                 continue;
             }
 
-            if (ui_state->mode == UiMode::WifiSetup || ui_state->mode == UiMode::HaSetup) {
-                // Back button — top-left area
+            if ((ui_state->mode == UiMode::WifiSetup || ui_state->mode == UiMode::HaSetup) && !touching) {
+                touching = true;
                 if (ti.x[0] < 100 && ti.y[0] < 80) {
+                    if (BUZZER_FEEDBACK_ENABLED && BUZZER_PIN) {
+                        tone(BUZZER_PIN, BUZZER_FREQ_HZ, BUZZER_DURATION_MS);
+                    }
                     ESP_LOGI(TAG, "Setup: Back to settings");
                     store_set_ui_mode_override(store, UiMode::SettingsMenu);
                 }
@@ -106,8 +115,9 @@ void touch_task(void* arg) {
                 continue;
             }
 
-            // Check gear icon touch (main screen only)
+            // Check gear icon touch (main screen only, initial touch only)
             if (!touching && isGearIconTouched(ti.x[0], ti.y[0])) {
+                touching = true;
                 ESP_LOGI(TAG, "Gear icon tapped — opening settings");
                 if (BUZZER_FEEDBACK_ENABLED && BUZZER_PIN) {
                     tone(BUZZER_PIN, BUZZER_FREQ_HZ, BUZZER_DURATION_MS);

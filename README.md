@@ -87,7 +87,6 @@ The font used is Montserrat Regular in size 26, it was converted using [fontconv
 
 This repository contains resources from:
 
-- https://github.com/Templarian/MaterialDesign (SIL OPEN FONT LICENSE Version 1.1)
+- https://github.com/Templarian/MaterialDesign (Apache License 2.0)
 - https://github.com/JulietaUla/Montserrat (Apache License 2.0)
 - https://github.com/ugomeda/home-assistant-epaper-remote (Apache License 2.0)
-- https://pictogrammers.com/library/mdi/

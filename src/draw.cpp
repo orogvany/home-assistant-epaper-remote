@@ -128,17 +128,17 @@ void drawSettingsMenu(FASTEPD* epaper) {
     epaper->setFont(Montserrat_Regular_26);
     epaper->setTextColor(BBEP_BLACK);
 
-    // Title
-    epaper->setCursor(SETTINGS_ITEM_MARGIN, 50);
+    // Back button top-left, Settings title right-justified, same line
+    epaper->setCursor(SETTINGS_ITEM_MARGIN, 40);
     epaper->write("< Back");
 
     BB_RECT rect;
     epaper->getStringBox("Settings", &rect);
-    epaper->setCursor((DISPLAY_WIDTH - rect.w) / 2, 50);
+    epaper->setCursor(DISPLAY_WIDTH - SETTINGS_ITEM_MARGIN - rect.w, 40);
     epaper->write("Settings");
 
     // Menu items with borders
-    const char* items[] = {"Configure WiFi", "Configure Home Assistant", "About"};
+    const char* items[] = {"Configure WiFi", "Configure HA", "About"};
     for (int i = 0; i < 3; i++) {
         uint16_t y = SETTINGS_ITEM_Y_START + i * (SETTINGS_ITEM_HEIGHT + 10);
         // Draw rounded rectangle border
@@ -194,20 +194,25 @@ void drawHaSetupScreen(FASTEPD* epaper, const char* device_ip) {
     epaper->write("< Back");
 
     BB_RECT rect;
-    const char* line1 = "Home Assistant Setup";
-    epaper->getStringBox(line1, &rect);
-    epaper->setCursor((DISPLAY_WIDTH - rect.w) / 2, 150);
-    epaper->write(line1);
+    const char* line1a = "Home Assistant";
+    epaper->getStringBox(line1a, &rect);
+    epaper->setCursor(std::max(0, ((int)DISPLAY_WIDTH - rect.w) / 2), 150);
+    epaper->write(line1a);
+
+    const char* line1b = "Setup";
+    epaper->getStringBox(line1b, &rect);
+    epaper->setCursor(std::max(0, ((int)DISPLAY_WIDTH - rect.w) / 2), 190);
+    epaper->write(line1b);
 
     const char* line2 = "Open in browser:";
     epaper->getStringBox(line2, &rect);
-    epaper->setCursor((DISPLAY_WIDTH - rect.w) / 2, 300);
+    epaper->setCursor(std::max(0, ((int)DISPLAY_WIDTH - rect.w) / 2), 300);
     epaper->write(line2);
 
     char url[64];
     snprintf(url, sizeof(url), "http://%s", device_ip);
     epaper->getStringBox(url, &rect);
-    epaper->setCursor((DISPLAY_WIDTH - rect.w) / 2, 360);
+    epaper->setCursor(std::max(0, ((int)DISPLAY_WIDTH - rect.w) / 2), 360);
     epaper->write(url);
 }
 
