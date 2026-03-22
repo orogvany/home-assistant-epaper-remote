@@ -10,7 +10,7 @@ HADeviceAction::HADeviceAction(HARestClient* client, const char* entity_id,
 }
 
 const char* HADeviceAction::_getDomain() {
-    // entity_id format: "domain.name" — return everything before the dot
+    // entity_id format: "domain.name" - return everything before the dot
     static char domain[32];
     const char* dot = strchr(_entity_id, '.');
     if (dot) {

@@ -28,7 +28,7 @@ struct UIDevice {
     uint16_t height;
 };
 
-// Centralized configuration — loaded from NVS as a single JSON blob.
+// Centralized configuration - loaded from NVS as a single JSON blob.
 // All values have defaults so the system works even with empty NVS.
 struct AppConfig {
     // WiFi
@@ -61,7 +61,7 @@ class ConfigStore {
 public:
     ConfigStore() = default;
 
-    // Initialize — loads from NVS or seeds defaults
+    // Initialize - loads from NVS or seeds defaults
     void begin();
 
     // Get the current config (read-only access)

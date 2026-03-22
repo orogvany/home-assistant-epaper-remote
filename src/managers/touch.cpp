@@ -149,7 +149,7 @@ void touch_task(void* arg) {
             // Check gear icon touch (main screen only, initial touch only)
             if (!touching && isGearIconTouched(ti.x[0], ti.y[0])) {
                 touching = true;
-                ESP_LOGI(TAG, "Gear icon tapped — opening settings");
+                ESP_LOGI(TAG, "Gear icon tapped - opening settings");
                 if (BUZZER_FEEDBACK_ENABLED && BUZZER_PIN) {
                     tone(BUZZER_PIN, BUZZER_FREQ_HZ, BUZZER_DURATION_MS);
                 }

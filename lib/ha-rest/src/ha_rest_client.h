@@ -2,7 +2,7 @@
 #include <cstdint>
 #include <Arduino.h>
 
-// HA REST API client — handles all HTTP communication with Home Assistant.
+// HA REST API client - handles all HTTP communication with Home Assistant.
 // Stateless: each call is independent. No persistent connections.
 
 struct HAConfig {
@@ -26,7 +26,7 @@ public:
 
     void begin(const HAConfig& config);
 
-    // Test connectivity — returns HTTP status code (200 = OK)
+    // Test connectivity - returns HTTP status code (200 = OK)
     int testConnection();
 
     // Fetch state of a single entity

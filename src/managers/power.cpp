@@ -49,7 +49,7 @@ void power_off_pms150g() {
 }
 
 bool power_was_rtc_wake() {
-    // Check Timer_Control register — if timer isn't enabled (TE=0),
+    // Check Timer_Control register - if timer isn't enabled (TE=0),
     // we never set it, so any TF flag is stale from factory/previous firmware
     Wire.beginTransmission(BM8563_ADDR);
     Wire.write(0x0E); // Timer_Control
@@ -57,7 +57,7 @@ bool power_was_rtc_wake() {
     Wire.requestFrom((uint8_t)BM8563_ADDR, (uint8_t)1);
     if (!Wire.available()) return false;
     uint8_t timer_ctrl = Wire.read();
-    if (!(timer_ctrl & 0x80)) return false; // TE bit not set — timer was never enabled by us
+    if (!(timer_ctrl & 0x80)) return false; // TE bit not set - timer was never enabled by us
 
     // Check Control_Status_2 for timer flag (TF)
     Wire.beginTransmission(BM8563_ADDR);

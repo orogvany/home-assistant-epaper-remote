@@ -107,10 +107,10 @@ bool isGearIconTouched(uint16_t touch_x, uint16_t touch_y) {
            touch_y >= (y - 10) && touch_y <= DISPLAY_HEIGHT;
 }
 
-// Settings menu items — returns 0-based index or -1 for back/none
+// Settings menu items - returns 0-based index or -1 for back/none
 // 0 = Configure WiFi, 1 = Configure HA, 2 = About, -1 = Back
 int getSettingsMenuItemTouched(uint16_t touch_x, uint16_t touch_y) {
-    // Back button — top-left area (generous hit box over "< Back" text)
+    // Back button - top-left area (generous hit box over "< Back" text)
     if (touch_x < 200 && touch_y < 80) return -1;
 
     // Menu items

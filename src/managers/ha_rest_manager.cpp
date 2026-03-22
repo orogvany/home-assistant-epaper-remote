@@ -122,12 +122,12 @@ void ha_rest_manager_task(void* arg) {
     HARestManagerArgs* ctx = static_cast<HARestManagerArgs*>(arg);
     EntityStore* store = ctx->store;
 
-    // Wait for WiFi with timeout — don't block forever on bad/missing creds
+    // Wait for WiFi with timeout - don't block forever on bad/missing creds
     ESP_LOGI(TAG, "Waiting for WiFi (10s timeout)...");
     EventBits_t bits = xEventGroupWaitBits(store->event_group, BIT_WIFI_UP,
                                             pdFALSE, pdTRUE, pdMS_TO_TICKS(10000));
     if (!(bits & BIT_WIFI_UP)) {
-        ESP_LOGE(TAG, "WiFi connection timed out — check settings");
+        ESP_LOGE(TAG, "WiFi connection timed out - check settings");
         store_set_hass_state(store, ConnState::ConnectionError);
     } else {
         ESP_LOGI(TAG, "WiFi is up");
@@ -200,7 +200,7 @@ void ha_rest_manager_task(void* arg) {
                 store_wait_for_wifi_up(store);
 
                 // Re-sync states after reconnect, then fall through
-                // to command processing (don't continue — pending commands
+                // to command processing (don't continue - pending commands
                 // need to be sent and their wake locks released)
                 wake_lock_acquire();
                 poll_entity_states(&client, store);
@@ -237,7 +237,7 @@ void ha_rest_manager_task(void* arg) {
 
         if (wifi_is_off) continue;
 
-        // Send any pending commands (optimistic — UI already updated)
+        // Send any pending commands (optimistic - UI already updated)
         // Wake lock was acquired by store_send_command() to bridge the gap
         // between touch releasing its lock and us processing the command
         bool had_commands = false;

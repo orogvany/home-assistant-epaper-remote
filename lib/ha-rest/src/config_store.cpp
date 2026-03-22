@@ -14,7 +14,7 @@ void ConfigStore::begin() {
         ESP_LOGI(TAG, "Config loaded: %s, %d known devices, %d UI devices",
                  _config.ha_url, _config.known_device_count, _config.ui_device_count);
     } else {
-        ESP_LOGI(TAG, "No saved config — using defaults");
+        ESP_LOGI(TAG, "No saved config - using defaults");
     }
 }
 
@@ -56,7 +56,7 @@ void ConfigStore::seedDefaults(const char* ssid, const char* password,
 void ConfigStore::_loadFromNVS() {
     Preferences prefs;
     if (!prefs.begin(NVS_NAMESPACE, true)) { // read-only
-        ESP_LOGI(TAG, "NVS namespace not found — first boot");
+        ESP_LOGI(TAG, "NVS namespace not found - first boot");
         return;
     }
 

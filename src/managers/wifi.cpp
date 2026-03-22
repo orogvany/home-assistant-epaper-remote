@@ -39,7 +39,7 @@ void launch_wifi(Configuration* config, EntityStore* store) {
         ESP_LOGI(TAG, "Connecting to WiFi: %s", config->wifi_ssid);
         WiFi.begin(config->wifi_ssid, config->wifi_password);
     } else {
-        ESP_LOGI(TAG, "No hardcoded WiFi — trying saved credentials");
+        ESP_LOGI(TAG, "No hardcoded WiFi - trying saved credentials");
         WiFi.begin();
     }
 }

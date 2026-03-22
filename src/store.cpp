@@ -62,7 +62,7 @@ void store_send_command(EntityStore* store, uint8_t entity_idx, uint8_t value) {
 
     ESP_LOGI(TAG, "Sending command to update entity %s to value %d", store->entities[entity_idx].entity_id, value);
 
-    // Hold wake lock until HA task processes the command — prevents CPU
+    // Hold wake lock until HA task processes the command - prevents CPU
     // from sleeping between touch releasing its lock and HA acquiring one
     wake_lock_acquire();
 
@@ -114,7 +114,7 @@ void store_update_ui_state(EntityStore* store, const Screen* screen, UIState* ui
                store->home_assistant == ConnState::Initializing) {
         ui_state->mode = UiMode::Boot; // Only show boot screen on initial startup
     } else {
-        // Always show main screen — gear icon lets user access settings
+        // Always show main screen - gear icon lets user access settings
         // Connection status will be shown via status icons (TODO)
         ui_state->mode = UiMode::MainScreen;
     }

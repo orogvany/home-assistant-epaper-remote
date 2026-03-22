@@ -1,7 +1,7 @@
 #pragma once
 #include <cstdint>
 
-// Generic device types — shared across all backends (HA, Alexa, etc.)
+// Generic device types - shared across all backends (HA, Alexa, etc.)
 enum class DeviceType : uint8_t {
     LIGHT,
     SWITCH,
@@ -24,14 +24,14 @@ enum class WidgetType : uint8_t {
     BUTTON,
 };
 
-// Generic device state — what the UI cares about
+// Generic device state - what the UI cares about
 struct DeviceState {
     bool is_on = false;
     uint8_t value = 0;       // 0-100 for dimmers/sliders, 0/1 for toggles
     bool reachable = true;
 };
 
-// Device action interface — implemented by each backend (HA REST, Alexa, etc.)
+// Device action interface - implemented by each backend (HA REST, Alexa, etc.)
 // This is the contract between the UI layer and the backend.
 class DeviceAction {
 public:

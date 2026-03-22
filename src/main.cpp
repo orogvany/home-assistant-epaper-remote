@@ -18,6 +18,7 @@
 #include "screen.h"
 #include "store.h"
 #include "ui_state.h"
+#include "widget_builder.h"
 #include "widgets/Slider.h"
 #include <FastEPD.h>
 
@@ -54,7 +55,7 @@ static bool idle_hook() {
     // Don't sleep while any task is doing hardware I/O
     if (wake_lock_is_held()) return false;
 
-    // Don't sleep again too quickly — give tasks time to run after wake
+    // Don't sleep again too quickly - give tasks time to run after wake
     static int64_t last_wake = 0;
     int64_t now = esp_timer_get_time();
     if (last_wake > 0 && (now - last_wake) < LIGHT_SLEEP_MIN_WAKE_US) return false;
@@ -136,11 +137,10 @@ void setup() {
     store_init(&store);
     store_set_last_touch(&store, millis()); // Start idle timer from boot
 
-    // Initialize config store — loads from NVS or uses defaults
+    // Initialize config store - loads from NVS or uses defaults
     config_store.begin();
 
     // Seed defaults from hardcoded config (only applies if NVS is empty)
-    // This keeps backward compat during migration — long term, config_remote.cpp goes away
     configure_remote(&config, &store, &screen);
     config_store.seedDefaults(config.wifi_ssid, config.wifi_password,
                               config.home_assistant_url, config.home_assistant_token);
@@ -151,6 +151,16 @@ void setup() {
     config.wifi_password = app.wifi_password;
     config.home_assistant_url = app.ha_url;
     config.home_assistant_token = app.ha_token;
+
+    // Build widgets from NVS config if available, otherwise keep hardcoded config_remote.cpp
+    if (app.ui_device_count > 0) {
+        screen.widget_count = 0;
+        store.entity_count = 0;
+        build_widgets_from_config(app, &store, &screen);
+        Serial.printf("Built %d widgets from NVS config\n", screen.widget_count);
+    } else {
+        Serial.println("No NVS devices - using hardcoded config_remote.cpp");
+    }
 
     // Read battery immediately so first screen draw has a real value
     if (FEATURE_BATTERY_INDICATOR && HAS_BATTERY_ADC) {

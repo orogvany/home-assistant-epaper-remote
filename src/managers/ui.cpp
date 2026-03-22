@@ -91,7 +91,7 @@ void ui_task(void* arg) {
         if (ulTaskNotifyTake(pdTRUE, notify_timeout)) {
             store_update_ui_state(ctx->store, ctx->screen, &current_state);
 
-            // Handle screen change — hold wake lock during all display operations
+            // Handle screen change - hold wake lock during all display operations
             wake_lock_acquire();
             size_t widget_idx;
             if (current_state.mode != displayed_state.mode) {

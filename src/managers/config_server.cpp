@@ -9,7 +9,7 @@ static const char* TAG = "config_server";
 static WebServer* server = nullptr;
 static ConfigStore* store = nullptr;
 
-// Embedded HTML page — served at /
+// Embedded HTML page - served at /
 static const char CONFIG_PAGE[] PROGMEM = R"rawliteral(
 <!DOCTYPE html>
 <html>
@@ -136,7 +136,7 @@ static const char CONFIG_PAGE[] PROGMEM = R"rawliteral(
         function renderActiveDevices() {
             const el = document.getElementById('active-devices');
             if (activeDevices.length === 0) {
-                el.innerHTML = '<p>None configured — use Discover to add devices</p>';
+                el.innerHTML = '<p>None configured - use Discover to add devices</p>';
                 return;
             }
             let html = '<ul style="list-style:none;padding:0">';
