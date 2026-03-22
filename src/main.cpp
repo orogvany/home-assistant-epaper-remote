@@ -4,6 +4,7 @@
 #include "draw.h"
 #include "driver/gpio.h"
 #include "esp_sleep.h"
+#include "esp_timer.h"
 #include "esp_freertos_hooks.h"
 #include <Wire.h>
 #include "managers/battery.h"
@@ -38,8 +39,22 @@ static void init_display(FASTEPD* ep) {
     ep->einkPower(true);
 }
 
+static bool usb_connected = false;
+
 static bool idle_hook() {
+    // Don't sleep during boot (let all tasks fully initialize)
+    if (millis() < LIGHT_SLEEP_BOOT_DELAY_MS) return false;
+
+    // Don't sleep if USB is connected (preserves serial debug)
+    if (usb_connected) return false;
+
+    // Don't sleep again too quickly — give tasks time to run after wake
+    static int64_t last_wake = 0;
+    int64_t now = esp_timer_get_time();
+    if (last_wake > 0 && (now - last_wake) < LIGHT_SLEEP_MIN_WAKE_US) return false;
+
     esp_light_sleep_start();
+    last_wake = esp_timer_get_time();
     return true;
 }
 
@@ -87,13 +102,18 @@ void setup() {
         power_off_pms150g();
     }
 
-    // Phase 2: Configure light sleep wake sources
+    // Detect USB connection (GPIO 5 USB_DET, >0.2V = USB present)
+    // Light sleep is disabled when USB is connected to preserve serial debug
+    pinMode(5, INPUT);
+    usb_connected = (analogReadMilliVolts(5) > 200);
+
+    // Configure light sleep wake sources
     if (FEATURE_LIGHT_SLEEP) {
         esp_sleep_enable_timer_wakeup(SLEEP_WAKE_INTERVAL_MS * 1000);
         gpio_wakeup_enable((gpio_num_t)TOUCH_INT, GPIO_INTR_LOW_LEVEL);
         esp_sleep_enable_gpio_wakeup();
+        // Register on core 0 only (esp_light_sleep_start is system-wide)
         esp_register_freertos_idle_hook_for_cpu(idle_hook, 0);
-        esp_register_freertos_idle_hook_for_cpu(idle_hook, 1);
     }
 
     // Initialize objects

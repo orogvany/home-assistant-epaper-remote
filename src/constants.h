@@ -15,11 +15,11 @@ constexpr bool FEATURE_WIFI_MODEM_SLEEP = true;
 // --- CPU Light Sleep ---
 // CPU enters light sleep via idle hook when all tasks are blocked.
 // Wakes on touch interrupt (GPIO 48) or timer.
-// NEEDS REWORK: idle hook fires too aggressively, sleeps before setup/tasks
-// complete, kills USB serial. Fix: add ready flag, delay hook registration,
-// skip when USB connected via GPIO 5.
-constexpr bool FEATURE_LIGHT_SLEEP = false;
-constexpr uint32_t SLEEP_WAKE_INTERVAL_MS = 5000;           // Timer wake interval for WebSocket servicing
+// Disabled when USB is connected (preserves serial debug).
+constexpr bool FEATURE_LIGHT_SLEEP = false; // BROKEN: light sleep corrupts e-ink display (SPI interrupted mid-refresh). Needs wake lock during display operations.
+constexpr uint32_t SLEEP_WAKE_INTERVAL_MS = 5000;            // Timer wake interval for WebSocket servicing
+constexpr uint32_t LIGHT_SLEEP_BOOT_DELAY_MS = 30000;        // Don't sleep during first 30s (let tasks fully init)
+constexpr uint32_t LIGHT_SLEEP_MIN_WAKE_US = 100000;         // Min 100ms awake between sleep cycles (microseconds)
 
 // --- Idle WiFi Disconnect ---
 // Disconnects WiFi after no touch for a configurable period.
@@ -48,7 +48,7 @@ constexpr float BATTERY_ADC_DIVIDER_RATIO = 2.0f;
 
 // --- BMI270 Gyroscope Suspend ---
 // Puts the BMI270 IMU into suspend mode on boot (~3.5µA vs ~950µA).
-constexpr bool FEATURE_BMI270_SUSPEND = false;
+constexpr bool FEATURE_BMI270_SUSPEND = true;
 
 // --- Buzzer Touch Feedback ---
 // Audible click on widget touch via onboard passive buzzer.
