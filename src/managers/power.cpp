@@ -35,6 +35,17 @@ void power_setup_rtc_timer(uint8_t minutes) {
     ESP_LOGI(TAG, "RTC timer set for %d minutes", minutes);
 }
 
+void power_disable_rtc_timer() {
+    // Disable timer (TE=0) and clear flag
+    Wire.beginTransmission(BM8563_ADDR);
+    Wire.write(0x0E); // Timer_Control
+    Wire.write(0x00); // TE=0 (disabled)
+    Wire.endTransmission();
+
+    power_clear_rtc_flag();
+    ESP_LOGI(TAG, "RTC timer disabled");
+}
+
 void power_off_pms150g() {
     if (!HAS_PMS150G || PWROFF_PIN == 0) return;
 

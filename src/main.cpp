@@ -95,8 +95,12 @@ void setup() {
     }
 
     // Phase 4: Check if this is an RTC wake from PMS150G power-off
+    if (FEATURE_PMS150G_SHUTDOWN && HAS_PMS150G) {
+        // Always disable RTC timer on boot - prevents stale timer from
+        // triggering false RTC wake detection after a button wake
+        power_disable_rtc_timer();
+    }
     if (FEATURE_PMS150G_SHUTDOWN && HAS_PMS150G && power_was_rtc_wake()) {
-        power_clear_rtc_flag();
         init_display(&epaper);
 
         // Read RTC seconds + minutes (BCD-encoded) for position randomization
