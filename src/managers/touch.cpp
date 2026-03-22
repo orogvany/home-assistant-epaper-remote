@@ -37,7 +37,7 @@ void touch_task(void* arg) {
 
     ESP_LOGI(TAG, "Initializing touchscreen...");
     int rc = -1;
-    for (int attempt = 0; attempt < 10 && rc <= 0; attempt++) {
+    for (int attempt = 0; attempt < 20 && rc <= 0; attempt++) {
         if (attempt > 0) {
             ESP_LOGI(TAG, "Retrying touch init (attempt %d)...", attempt + 1);
             vTaskDelay(pdMS_TO_TICKS(200));
