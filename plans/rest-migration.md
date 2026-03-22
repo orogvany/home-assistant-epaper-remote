@@ -189,11 +189,32 @@ no fighting between persistent connection and sleep cycles.
 - ❌ Need to wire widgets → Actions instead of store → entity index
 - Future: enables non-HA backends (Alexa, webhooks, MQTT)
 
-### Phase R4: NVS Configuration Storage
+### Phase R4: NVS Configuration Storage ✅ COMPLETE
 
-- Move config from compiled config_remote.cpp to NVS JSON
-- Boot reads config from NVS
-- If no config: show setup required screen
+- ✅ ConfigStore class in lib/ha-rest/ — single JSON blob in NVS
+- ✅ AppConfig struct: WiFi, HA, settings, known devices, UI devices
+- ✅ Wired into main.cpp and HA REST manager
+- ✅ Seeds defaults from hardcoded config_remote.cpp (backward compat)
+- ✅ NVS values override hardcoded if saved
+- ✅ Poll interval read from config store
+
+### Phase R4.5: On-Device Settings UI — IN PROGRESS
+
+Goal: Gear icon + settings menu on e-ink screen, prerequisite for captive portal.
+
+- Gear icon (bottom right, always visible on main screen)
+- Touch target for gear icon opens settings menu
+- Settings menu screen: rendered list with touch targets
+  - "Configure WiFi" → WiFi setup screen
+  - "Configure Home Assistant" → HA setup screen
+  - "About" → version/battery/IP info
+  - Back button → return to main screen
+- WiFi setup screen: "Connect to 'HA-Remote' to configure WiFi"
+  - Starts WiFiManager captive portal AP
+  - Shows AP name and instructions
+- HA setup screen: "Open http://{device_ip} to configure"
+  - Starts web server for HA token/entity config
+- All screens use existing e-ink widget patterns (no LVGL)
 
 ### Phase R5: Captive Portal
 

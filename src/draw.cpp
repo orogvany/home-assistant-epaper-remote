@@ -1,4 +1,5 @@
 #include "draw.h"
+#include "assets/icons.h"
 #include "assets/Montserrat_Regular_26.h"
 #include "boards.h"
 #include <FastEPD.h>
@@ -90,6 +91,15 @@ void drawBatteryIndicator(FASTEPD* epaper, uint8_t percentage, bool charging) {
         epaper->drawLine(bx + 4, by + 6, bx,     by + 13, BBEP_BLACK);
         epaper->drawLine(bx + 5, by + 6, bx + 1, by + 13, BBEP_BLACK);
     }
+}
+
+constexpr uint16_t GEAR_ICON_SIZE = 64;
+constexpr uint16_t GEAR_MARGIN = 16;
+
+void drawGearIcon(FASTEPD* epaper) {
+    uint16_t x = DISPLAY_WIDTH - GEAR_MARGIN - GEAR_ICON_SIZE;
+    uint16_t y = DISPLAY_HEIGHT - GEAR_MARGIN - GEAR_ICON_SIZE;
+    epaper->loadBMP(cog_outline, x, y, 0xf, BBEP_BLACK);
 }
 
 void drawIdleScreen(FASTEPD* epaper, int16_t offset_x, int16_t offset_y) {

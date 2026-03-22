@@ -5,6 +5,7 @@ from io import BytesIO, TextIOWrapper
 
 WIDGET_ICON_SIZE = (64, 64)
 UI_ICON_SIZE = (256, 256)
+CHROME_ICON_SIZE = (64, 64)
 HEADER = """// AUTO-GENERATED FILE — DO NOT EDIT
 #pragma once
 #include <pgmspace.h>
@@ -57,6 +58,8 @@ def main() -> None:
             handle_file(file_path, out, WIDGET_ICON_SIZE)
         for file_path in sorted(glob.glob("icons-ui/*.png")):
             handle_file(file_path, out, UI_ICON_SIZE)
+        for file_path in sorted(glob.glob("icons-chrome/*.png")):
+            handle_file(file_path, out, CHROME_ICON_SIZE)
 
     print("Done")
 

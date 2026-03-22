@@ -44,6 +44,7 @@ void ui_main_screen_full_draw(UIState* state, BitDepth depth, Screen* screen, FA
     if (FEATURE_BATTERY_INDICATOR && HAS_BATTERY_ADC) {
         drawBatteryIndicator(epaper, state->battery_percentage, state->battery_charging);
     }
+    drawGearIcon(epaper);
 }
 
 void ui_show_message(UiMode mode, FASTEPD* epaper) {
