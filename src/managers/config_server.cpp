@@ -255,10 +255,21 @@ static const char CONFIG_PAGE[] PROGMEM = R"rawliteral(
         }).catch(e => { document.getElementById('discover-list').innerHTML = '<p class="error">Discovery failed</p>'; });
     }
 
+    function defaultIcons(domain) {
+        const map = {
+            light: ['lightbulb_outline', 'lightbulb_off_outline'],
+            fan: ['fan', 'fan_off'],
+            vacuum: ['robot_outline', 'robot_off_outline'],
+        };
+        return map[domain] || ['lightbulb_outline', 'lightbulb_off_outline'];
+    }
+
     function addDevice(entityId, name, widgetType) {
         if (activeDevices.length >= 8) { alert('Max 8 devices'); return; }
         if (activeDevices.find(d => d.entity_id === entityId)) return;
-        activeDevices.push({ entity_id: entityId, label: name, widget_type: widgetType, icon_on: 'lightbulb_outline', icon_off: 'lightbulb_off_outline', sort_order: activeDevices.length });
+        const domain = entityId.split('.')[0];
+        const [iconOn, iconOff] = defaultIcons(domain);
+        activeDevices.push({ entity_id: entityId, label: name, widget_type: widgetType, icon_on: iconOn, icon_off: iconOff, sort_order: activeDevices.length });
         renderActive();
         discoverDevices(); // Re-render to show "Added"
     }

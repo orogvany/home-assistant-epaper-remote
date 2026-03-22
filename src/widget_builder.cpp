@@ -6,6 +6,34 @@
 
 static const char* TAG = "widget_builder";
 
+// Map icon name string to compiled icon array
+static const uint8_t* icon_by_name(const char* name) {
+    if (strcmp(name, "fan") == 0) return fan;
+    if (strcmp(name, "fan_off") == 0) return fan_off;
+    if (strcmp(name, "lightbulb_outline") == 0) return lightbulb_outline;
+    if (strcmp(name, "lightbulb_off_outline") == 0) return lightbulb_off_outline;
+    if (strcmp(name, "lightbulb_variant_outline") == 0) return lightbulb_variant_outline;
+    if (strcmp(name, "robot_outline") == 0) return robot_outline;
+    if (strcmp(name, "robot_off_outline") == 0) return robot_off_outline;
+    return lightbulb_outline; // Fallback
+}
+
+// Default icon mapping by domain
+static const char* default_icon_on(const char* domain) {
+    if (strcmp(domain, "light") == 0) return "lightbulb_outline";
+    if (strcmp(domain, "fan") == 0) return "fan";
+    if (strcmp(domain, "vacuum") == 0) return "robot_outline";
+    // TODO: add switch/plug, cover/blinds, lock, media_player/speaker icons
+    return "lightbulb_outline"; // Generic fallback
+}
+
+static const char* default_icon_off(const char* domain) {
+    if (strcmp(domain, "light") == 0) return "lightbulb_off_outline";
+    if (strcmp(domain, "fan") == 0) return "fan_off";
+    if (strcmp(domain, "vacuum") == 0) return "robot_off_outline";
+    return "lightbulb_off_outline";
+}
+
 // Map entity_id domain to CommandType
 static CommandType domain_to_command_type(const char* entity_id, const char* widget_type) {
     // Extract domain from "domain.name"
@@ -61,13 +89,21 @@ int build_widgets_from_config(const AppConfig& app, EntityStore* store, Screen* 
             .command_type = domain_to_command_type(dev.entity_id, dev.widget_type),
         };
 
+        // Extract domain for default icon lookup
+        char domain[16] = {};
+        const char* dot = strchr(dev.entity_id, '.');
+        if (dot) { size_t len = dot - dev.entity_id; if (len >= sizeof(domain)) len = sizeof(domain)-1; memcpy(domain, dev.entity_id, len); }
+
+        const uint8_t* ico_on = icon_by_name(dev.icon_on[0] ? dev.icon_on : default_icon_on(domain));
+        const uint8_t* ico_off = icon_by_name(dev.icon_off[0] ? dev.icon_off : default_icon_off(domain));
+
         if (is_slider) {
             screen_add_slider(
                 SliderConfig{
                     .entity_ref = store_add_entity(store, entity),
                     .label = dev.label,
-                    .icon_on = lightbulb_outline,
-                    .icon_off = lightbulb_off_outline,
+                    .icon_on = ico_on,
+                    .icon_off = ico_off,
                     .pos_x = margin,
                     .pos_y = y,
                     .width = (uint16_t)(DISPLAY_WIDTH - 2 * margin),
@@ -80,8 +116,8 @@ int build_widgets_from_config(const AppConfig& app, EntityStore* store, Screen* 
                 ButtonConfig{
                     .entity_ref = store_add_entity(store, entity),
                     .label = dev.label,
-                    .icon_on = lightbulb_outline,
-                    .icon_off = lightbulb_off_outline,
+                    .icon_on = ico_on,
+                    .icon_off = ico_off,
                     .pos_x = margin,
                     .pos_y = y,
                 },
