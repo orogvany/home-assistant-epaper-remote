@@ -229,8 +229,13 @@ static void hass_ws_event_handler(WStype_t type, uint8_t* payload, size_t length
         ESP_LOGI(TAG, "WebSocket connected");
         break;
     case WStype_DISCONNECTED:
-        ESP_LOGI(TAG, "WebSocket disconnected");
-        hass_update_state(hass, ConnState::ConnectionError);
+        // Don't update UI if this is an intentional idle disconnect (Phase 3)
+        if (store_get_wifi_idle(hass->store)) {
+            ESP_LOGI(TAG, "WebSocket disconnected (idle, no UI update)");
+        } else {
+            ESP_LOGI(TAG, "WebSocket disconnected");
+            hass_update_state(hass, ConnState::ConnectionError);
+        }
         break;
     case WStype_TEXT: {
         cJSON* json = cJSON_ParseWithLength((const char*)payload, length);
