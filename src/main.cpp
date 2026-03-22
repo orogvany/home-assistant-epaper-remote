@@ -191,6 +191,7 @@ void setup() {
     touch_task_args.screen = &screen;
     touch_task_args.state = &shared_ui_state;
     touch_task_args.store = &store;
+    touch_task_args.config_store = &config_store;
     xTaskCreate(touch_task, "touch", 4096, &touch_task_args, 1, nullptr);
 
     // Launch battery monitoring task

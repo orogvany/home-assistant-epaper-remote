@@ -11,7 +11,7 @@ void drawBatteryIndicator(FASTEPD* epaper, uint8_t percentage, bool charging);
 void drawGearIcon(FASTEPD* epaper);
 void drawSettingsMenu(FASTEPD* epaper);
 void drawWifiSetupScreen(FASTEPD* epaper, const char* ap_name);
-void drawHaSetupScreen(FASTEPD* epaper, const char* device_ip);
+void drawConfigureScreen(FASTEPD* epaper, const char* device_ip);
 void drawAboutScreen(FASTEPD* epaper, const char* version, const char* wifi_ssid,
                      const char* ha_url, bool ha_connected, uint8_t battery_pct);
 void drawIdleScreen(FASTEPD* epaper, int16_t offset_x, int16_t offset_y);

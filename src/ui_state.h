@@ -15,7 +15,7 @@ enum class UiMode : uint8_t {
     MainScreen,
     SettingsMenu,
     WifiSetup,
-    HaSetup,
+    Configure,  // Web server running for general configuration
     About,
 };
 

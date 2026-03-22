@@ -2,6 +2,7 @@
 #include "boards.h"
 #include "constants.h"
 #include "draw.h"
+#include "managers/config_server.h"
 #include "managers/wifi_portal.h"
 #include "wake_lock.h"
 #include "freertos/FreeRTOS.h"
@@ -90,8 +91,9 @@ void touch_task(void* arg) {
                     wifi_portal_start("HA-Remote");
                     store_set_ui_mode_override(store, UiMode::WifiSetup);
                 } else if (item == 1) {
-                    ESP_LOGI(TAG, "Settings: Configure HA");
-                    store_set_ui_mode_override(store, UiMode::HaSetup);
+                    ESP_LOGI(TAG, "Settings: Configure");
+                    config_server_start(ctx->config_store);
+                    store_set_ui_mode_override(store, UiMode::Configure);
                 } else if (item == 2) {
                     ESP_LOGI(TAG, "Settings: About");
                     store_set_ui_mode_override(store, UiMode::About);
@@ -127,13 +129,14 @@ void touch_task(void* arg) {
                 continue;
             }
 
-            if (ui_state->mode == UiMode::HaSetup && !touching) {
+            if (ui_state->mode == UiMode::Configure && !touching) {
                 touching = true;
                 if (ti.x[0] < 200 && ti.y[0] < 80) {
                     if (BUZZER_FEEDBACK_ENABLED && BUZZER_PIN) {
                         tone(BUZZER_PIN, BUZZER_FREQ_HZ, BUZZER_DURATION_MS);
                     }
-                    ESP_LOGI(TAG, "HA Setup: Back to settings");
+                    ESP_LOGI(TAG, "Configure: Back to settings");
+                    config_server_stop();
                     store_set_ui_mode_override(store, UiMode::SettingsMenu);
                 }
                 continue;
@@ -196,11 +199,13 @@ void touch_task(void* arg) {
                 // Poll WiFi portal if active (needs frequent processing)
                 if (wifi_portal_is_active()) {
                     if (wifi_portal_poll()) {
-                        // WiFi configured successfully — save and return to main
                         ESP_LOGI(TAG, "WiFi portal: connected, returning to main");
                         store_set_ui_mode_override(store, UiMode::Blank);
                     }
-                    vTaskDelay(pdMS_TO_TICKS(100)); // WiFiManager needs frequent polling
+                    vTaskDelay(pdMS_TO_TICKS(100));
+                } else if (config_server_is_active()) {
+                    config_server_poll();
+                    vTaskDelay(pdMS_TO_TICKS(50));
                 } else if (FEATURE_LIGHT_SLEEP && touch_semaphore) {
                     xSemaphoreTake(touch_semaphore, portMAX_DELAY);
                 } else {

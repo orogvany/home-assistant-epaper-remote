@@ -120,9 +120,12 @@ void ui_task(void* arg) {
                 } else if (current_state.mode == UiMode::WifiSetup) {
                     drawWifiSetupScreen(ctx->epaper, "HA-Remote");
                     ctx->epaper->fullUpdate(CLEAR_SLOW, false);
-                } else if (current_state.mode == UiMode::HaSetup) {
-                    // TODO: pass actual device IP
-                    drawHaSetupScreen(ctx->epaper, "192.168.x.x");
+                } else if (current_state.mode == UiMode::Configure) {
+                    char ip[20] = "Not connected";
+                    if (WiFi.status() == WL_CONNECTED) {
+                        strlcpy(ip, WiFi.localIP().toString().c_str(), sizeof(ip));
+                    }
+                    drawConfigureScreen(ctx->epaper, ip);
                     ctx->epaper->fullUpdate(CLEAR_SLOW, false);
                 } else {
                     ui_show_message(current_state.mode, ctx->epaper);
