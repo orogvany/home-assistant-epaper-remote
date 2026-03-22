@@ -44,7 +44,7 @@ constexpr uint16_t BATT_ICON_W = 28;
 constexpr uint16_t BATT_ICON_H = 14;
 constexpr uint16_t BATT_TIP_W = 3;
 constexpr uint16_t BATT_BORDER = 2;
-constexpr uint16_t BATT_MARGIN = 10;
+constexpr uint16_t BATT_MARGIN = 16;
 
 void drawBatteryIndicator(FASTEPD* epaper, uint8_t percentage, bool charging) {
     char label[8];

@@ -1,6 +1,7 @@
 #include "store.h"
 #include "constants.h"
 #include "esp_system.h"
+#include "wake_lock.h"
 
 static const char* TAG = "store";
 
@@ -60,6 +61,10 @@ void store_send_command(EntityStore* store, uint8_t entity_idx, uint8_t value) {
     xSemaphoreGive(store->mutex);
 
     ESP_LOGI(TAG, "Sending command to update entity %s to value %d", store->entities[entity_idx].entity_id, value);
+
+    // Hold wake lock until HA task processes the command — prevents CPU
+    // from sleeping between touch releasing its lock and HA acquiring one
+    wake_lock_acquire();
 
     if (store->home_assistant_task) {
         xTaskNotifyGive(store->home_assistant_task);

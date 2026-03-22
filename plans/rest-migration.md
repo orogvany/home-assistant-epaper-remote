@@ -145,28 +145,40 @@ Filter client-side for our configured entities. One call gets everything.
 
 ## Implementation Phases
 
-### Phase R1: REST Client (replace WebSocket)
+### Phase R1: REST Client (replace WebSocket) ✅ COMPLETE
 
-- Replace WebSocket with HTTPClient REST calls
-- Bulk state fetch on connect: `GET /api/states`
-- Command send via `POST /api/services/<domain>/<service>`
-- Periodic polling (configurable interval)
-- Optimistic UI updates with revert on failure
-- Remove WebSocket library dependency
+- ✅ Replace WebSocket with HTTPClient REST calls
+- ✅ Per-entity state fetch via `GET /api/states/<entity_id>`
+- ✅ Command send via `POST /api/services/<domain>/<service>`
+- ✅ Periodic polling (HA_REST_POLL_INTERVAL_MS, default 10s)
+- ✅ Remove WebSocket library dependency, add ArduinoJson
+- ✅ Created lib/ha-rest/ as portable library with DeviceAction interface
+- ✅ Wake locks around all HTTP operations
+- ✅ WiFi idle disconnect/reconnect preserved
+- ✅ PMS150G shutdown preserved
+- ⚠️ Optimistic UI partially working — commands fire immediately, but no revert on failure yet
+- ⚠️ Slider rendering artifact when value decreases (pre-existing, not REST-related)
+- ⚠️ input_number state parsing via numeric string works
 
-### Phase R2: Sleep Integration
+**Result**: Noticeably faster boot and command response vs WebSocket. No more 12s latency.
 
-- Connect WiFi → poll states → disconnect WiFi → sleep
+### Phase R2: Sleep Integration — IN PROGRESS
+
+Goal: With REST, WiFi is only needed during poll/command windows. Between them, disconnect WiFi and sleep.
+
+- Connect WiFi → poll states → process touch → send commands → disconnect WiFi → sleep
 - Wake on touch → connect WiFi → send command → poll → disconnect → sleep
 - Wake on timer (N seconds) → connect WiFi → poll states → disconnect → sleep
 - No persistent connection needed — perfect for light sleep
+- Key difference from WebSocket: no connection state to maintain through sleep
 
-### Phase R3: Action Abstraction
+### Phase R3: Action Abstraction — NOT STARTED
 
-- Create Action interface
-- HARestAction implements it
-- Widgets reference Actions instead of entity configs
-- Prepare for non-HA actions
+- ✅ DeviceAction interface created (device_interface.h)
+- ✅ HADeviceAction implementation created (ha_device_action.h/cpp)
+- ❌ Widgets still reference entity configs via store, not Actions directly
+- ❌ Need to wire widgets → Actions instead of store → entity index
+- Future: enables non-HA backends (Alexa, webhooks, MQTT)
 
 ### Phase R4: NVS Configuration Storage
 

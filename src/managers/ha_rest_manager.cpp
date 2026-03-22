@@ -188,13 +188,14 @@ void ha_rest_manager_task(void* arg) {
                 wifi_is_off = false;
                 store_wait_for_wifi_up(store);
 
-                // Re-sync states after reconnect
+                // Re-sync states after reconnect, then fall through
+                // to command processing (don't continue — pending commands
+                // need to be sent and their wake locks released)
                 wake_lock_acquire();
                 poll_entity_states(&client, store);
                 wake_lock_release();
                 store_set_hass_state(store, ConnState::Up);
                 last_poll_ms = millis();
-                continue;
             }
 
             // Check for idle timeout
@@ -226,17 +227,24 @@ void ha_rest_manager_task(void* arg) {
         if (wifi_is_off) continue;
 
         // Send any pending commands (optimistic — UI already updated)
-        wake_lock_acquire();
+        // Wake lock was acquired by store_send_command() to bridge the gap
+        // between touch releasing its lock and us processing the command
+        bool had_commands = false;
         while (store_get_pending_command(store, &command)) {
+            had_commands = true;
+            wake_lock_acquire(); // Hold lock during HTTP call
             ESP_LOGI(TAG, "Sending command: %s = %d", command.entity_id, command.value);
             bool ok = send_ha_command(&client, &command);
             if (!ok) {
                 ESP_LOGE(TAG, "Command failed for %s", command.entity_id);
-                // TODO: revert UI on failure
             }
             store_ack_pending_command(store, &command);
+            wake_lock_release();
         }
-        wake_lock_release();
+        // Release the wake lock that store_send_command() acquired
+        if (had_commands) {
+            wake_lock_release();
+        }
 
         // Periodic state polling
         uint32_t now = millis();

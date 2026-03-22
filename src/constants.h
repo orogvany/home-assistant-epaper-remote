@@ -10,28 +10,28 @@
 
 // --- WiFi Modem Sleep ---
 // Sleeps the WiFi radio between DTIM beacons while maintaining connection.
-constexpr bool FEATURE_WIFI_MODEM_SLEEP = false;
+constexpr bool FEATURE_WIFI_MODEM_SLEEP = true;
 
 // --- CPU Light Sleep ---
 // CPU enters light sleep via idle hook when all tasks are blocked.
 // Wakes on touch interrupt (GPIO 48) or timer.
 // Disabled when USB is connected (preserves serial debug).
-constexpr bool FEATURE_LIGHT_SLEEP = false;
-constexpr uint32_t SLEEP_WAKE_INTERVAL_MS = 5000;            // Timer wake interval for WebSocket servicing
+constexpr bool FEATURE_LIGHT_SLEEP = true;
+constexpr uint32_t SLEEP_WAKE_INTERVAL_MS = 5000;            // Timer wake interval during light sleep
 constexpr uint32_t LIGHT_SLEEP_BOOT_DELAY_MS = 60000;        // Don't sleep during first 60s (let WiFi fully settle)
 constexpr uint32_t LIGHT_SLEEP_MIN_WAKE_US = 100000;         // Min 100ms awake between sleep cycles (microseconds)
 
 // --- Idle WiFi Disconnect ---
 // Disconnects WiFi after no touch for a configurable period.
 // Touch reconnects WiFi automatically.
-constexpr bool FEATURE_IDLE_WIFI_DISCONNECT = false;
+constexpr bool FEATURE_IDLE_WIFI_DISCONNECT = true;
 constexpr uint32_t IDLE_WIFI_DISCONNECT_MS = 5 * 60 * 1000;  // 5 minutes
 
 // --- PMS150G Deep Power-Off ---
 // Powers off the entire device via PMS150G after extended idle.
 // RTC alarm wakes device periodically to refresh idle screen.
 // Button press wakes device for normal operation.
-constexpr bool FEATURE_PMS150G_SHUTDOWN = false;
+constexpr bool FEATURE_PMS150G_SHUTDOWN = true;
 // How long before it goes into deep sleep since last activity
 constexpr uint32_t PMS150G_SHUTDOWN_IDLE_MS = 6UL * 60 * 60 * 1000; // 6 hours
 // How long between screen refreshes to avoid any burn in.  Also updates the battery %
