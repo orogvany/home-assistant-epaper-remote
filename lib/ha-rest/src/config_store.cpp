@@ -260,8 +260,8 @@ bool ConfigStore::_deserializeFromJson(const char* json, size_t len) {
         strlcpy(dev.label, d["label"] | "", sizeof(dev.label));
         strlcpy(dev.widget_type, d["widget_type"] | "button", sizeof(dev.widget_type));
         strlcpy(dev.source, d["source"] | "ha", sizeof(dev.source));
-        strlcpy(dev.icon_on, d["icon_on"] | "lightbulb_outline", sizeof(dev.icon_on));
-        strlcpy(dev.icon_off, d["icon_off"] | "lightbulb_off_outline", sizeof(dev.icon_off));
+        strlcpy(dev.icon_on, d["icon_on"] | "lightbulb", sizeof(dev.icon_on));
+        strlcpy(dev.icon_off, d["icon_off"] | "lightbulb_off", sizeof(dev.icon_off));
         dev.sort_order = d["sort_order"] | 0;
         dev.pos_x = d["pos_x"] | 30;
         dev.pos_y = d["pos_y"] | 30;

@@ -10,29 +10,27 @@ static const char* TAG = "widget_builder";
 
 // Map icon name string to compiled icon array
 static const uint8_t* icon_by_name(const char* name) {
+    if (strcmp(name, "lightbulb") == 0) return btn_lightbulb;
+    if (strcmp(name, "lightbulb_off") == 0) return btn_lightbulb_off;
     if (strcmp(name, "fan") == 0) return btn_fan;
     if (strcmp(name, "fan_off") == 0) return btn_fan_off;
-    if (strcmp(name, "lightbulb_outline") == 0) return btn_lightbulb_outline;
-    if (strcmp(name, "lightbulb_off_outline") == 0) return btn_lightbulb_off_outline;
-    if (strcmp(name, "robot_outline") == 0) return btn_robot_outline;
-    if (strcmp(name, "robot_off_outline") == 0) return btn_robot_off_outline;
-    return btn_lightbulb_outline; // Fallback
+    if (strcmp(name, "robot") == 0) return btn_robot;
+    if (strcmp(name, "robot_off") == 0) return btn_robot_off;
+    return btn_lightbulb;
 }
 
-// Default icon mapping by domain
 static const char* default_icon_on(const char* domain) {
-    if (strcmp(domain, "light") == 0) return "lightbulb_outline";
+    if (strcmp(domain, "light") == 0) return "lightbulb";
     if (strcmp(domain, "fan") == 0) return "fan";
-    if (strcmp(domain, "vacuum") == 0) return "robot_outline";
-    // TODO: add switch/plug, cover/blinds, lock, media_player/speaker icons
-    return "lightbulb_outline"; // Generic fallback
+    if (strcmp(domain, "vacuum") == 0) return "robot";
+    return "lightbulb";
 }
 
 static const char* default_icon_off(const char* domain) {
-    if (strcmp(domain, "light") == 0) return "lightbulb_off_outline";
+    if (strcmp(domain, "light") == 0) return "lightbulb_off";
     if (strcmp(domain, "fan") == 0) return "fan_off";
-    if (strcmp(domain, "vacuum") == 0) return "robot_off_outline";
-    return "lightbulb_off_outline";
+    if (strcmp(domain, "vacuum") == 0) return "robot_off";
+    return "lightbulb_off";
 }
 
 // Map entity_id domain to CommandType

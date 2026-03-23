@@ -152,7 +152,7 @@ static const char CONFIG_PAGE[] PROGMEM = R"rawliteral(
             opt.addEventListener('click', () => {
                 activeDevices[idx].icon_on = ico.id;
                 // Auto-set off icon (try _off variant)
-                const offId = ico.id.replace(/_outline$/, '_off_outline').replace(/^([^_]+)$/, '$1_off');
+                const offId = ico.id + '_off';
                 const offIco = icons.find(i => i.id === offId);
                 activeDevices[idx].icon_off = offIco ? offId : ico.id;
                 popover.className = 'icon-popover';
@@ -217,7 +217,7 @@ static const char CONFIG_PAGE[] PROGMEM = R"rawliteral(
             li.className = 'dev-row';
             li.draggable = true;
             li.dataset.idx = i;
-            const ico = iconDataFor(d.icon_on || 'lightbulb_outline');
+            const ico = iconDataFor(d.icon_on || 'lightbulb');
             li.innerHTML = `
                 <span class="dev-handle">&#8801;</span>
                 <img class="dev-icon" src="${ico ? ico.data : ''}" alt="${d.icon_on||''}" title="Change icon" data-idx="${i}">
@@ -291,11 +291,11 @@ static const char CONFIG_PAGE[] PROGMEM = R"rawliteral(
 
     function defaultIcons(domain) {
         const map = {
-            light: ['lightbulb_outline', 'lightbulb_off_outline'],
+            light: ['lightbulb', 'lightbulb_off'],
             fan: ['fan', 'fan_off'],
-            vacuum: ['robot_outline', 'robot_off_outline'],
+            vacuum: ['robot', 'robot_off'],
         };
-        return map[domain] || ['lightbulb_outline', 'lightbulb_off_outline'];
+        return map[domain] || ['lightbulb', 'lightbulb_off'];
     }
 
     function addDevice(entityId, name, widgetType) {
@@ -386,7 +386,7 @@ static const char CONFIG_PAGE[] PROGMEM = R"rawliteral(
     function addAlexaDevice(entityId, name, widgetType) {
         if (activeDevices.length >= 8) { alert('Max 8 devices'); return; }
         if (activeDevices.find(d => d.entity_id === entityId)) return;
-        activeDevices.push({ entity_id: entityId, label: name, widget_type: widgetType, source: 'alexa', icon_on: 'lightbulb_outline', icon_off: 'lightbulb_off_outline', sort_order: activeDevices.length });
+        activeDevices.push({ entity_id: entityId, label: name, widget_type: widgetType, source: 'alexa', icon_on: 'lightbulb', icon_off: 'lightbulb_off', sort_order: activeDevices.length });
         renderActive();
         alexaLoadCached();
     }
@@ -587,8 +587,8 @@ static void handle_ha_post_devices() {
         strlcpy(dev.label, d["label"] | "", sizeof(dev.label));
         strlcpy(dev.widget_type, d["widget_type"] | "button", sizeof(dev.widget_type));
         strlcpy(dev.source, d["source"] | "ha", sizeof(dev.source));
-        strlcpy(dev.icon_on, d["icon_on"] | "lightbulb_outline", sizeof(dev.icon_on));
-        strlcpy(dev.icon_off, d["icon_off"] | "lightbulb_off_outline", sizeof(dev.icon_off));
+        strlcpy(dev.icon_on, d["icon_on"] | "lightbulb", sizeof(dev.icon_on));
+        strlcpy(dev.icon_off, d["icon_off"] | "lightbulb_off", sizeof(dev.icon_off));
         dev.sort_order = d["sort_order"] | cfg.ui_device_count;
         cfg.ui_device_count++;
     }

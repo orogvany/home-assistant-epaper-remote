@@ -54,8 +54,8 @@ void configure_remote(Configuration* config, EntityStore* store, Screen* screen)
         SliderConfig{
             .entity_ref = store_add_entity(store, living_room_lights),
             .label = "Living room",
-            .icon_on = lightbulb_outline,
-            .icon_off = lightbulb_off_outline,
+            .icon_on = btn_lightbulb,
+            .icon_off = btn_lightbulb_off,
             .pos_x = 30,
             .pos_y = 30,
             .width = DISPLAY_WIDTH - 60,
@@ -67,8 +67,8 @@ void configure_remote(Configuration* config, EntityStore* store, Screen* screen)
         SliderConfig{
             .entity_ref = store_add_entity(store, bedroom_lights),
             .label = "Bedroom",
-            .icon_on = lightbulb_outline,
-            .icon_off = lightbulb_off_outline,
+            .icon_on = btn_lightbulb,
+            .icon_off = btn_lightbulb_off,
             .pos_x = 30,
             .pos_y = 240,
             .width = DISPLAY_WIDTH - 60,
@@ -93,8 +93,8 @@ void configure_remote(Configuration* config, EntityStore* store, Screen* screen)
         ButtonConfig{
             .entity_ref = store_add_entity(store, pc_lights),
             .label = "PC",
-            .icon_on = lightbulb_outline,
-            .icon_off = lightbulb_off_outline,
+            .icon_on = btn_lightbulb,
+            .icon_off = btn_lightbulb_off,
             .pos_x = 30,
             .pos_y = 660,
         },
@@ -104,8 +104,8 @@ void configure_remote(Configuration* config, EntityStore* store, Screen* screen)
         ButtonConfig{
             .entity_ref = store_add_entity(store, night_lights),
             .label = "Night lights",
-            .icon_on = robot_outline,
-            .icon_off = robot_off_outline,
+            .icon_on = btn_robot,
+            .icon_off = btn_robot_off,
             .pos_x = 30,
             .pos_y = 800,
         },
