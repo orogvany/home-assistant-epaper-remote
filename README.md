@@ -1,10 +1,12 @@
-# Home Assistant ePaper remote
+# Home Assistant / Alexa ePaper remote
 
 e-Ink remote for Home Assistant built with [FastEPD](https://github.com/bitbank2/FastEPD).
 
 ![Preview](./preview.jpg)
 
 It uses the REST API of Home Assistant, no plugin is required on the server.
+
+This is also integrated with Alexa if you so prefer.
 
 ## Hardware supported
 
