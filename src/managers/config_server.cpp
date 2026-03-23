@@ -1,6 +1,8 @@
 #include "config_server.h"
 #include "esp_log.h"
 #include "generated/icon_manifest.h"
+#include <alexa_api.h>
+#include <alexa_auth.h>
 #include <HTTPClient.h>
 #include <WebServer.h>
 #include <WiFi.h>
@@ -9,6 +11,7 @@
 static const char* TAG = "config_server";
 static WebServer* server = nullptr;
 static ConfigStore* store = nullptr;
+static AlexaAuth alexa_auth;
 
 // Embedded HTML page - served at /
 // NOTE: This is a large string literal. If it gets too big for flash,
@@ -101,6 +104,24 @@ static const char CONFIG_PAGE[] PROGMEM = R"rawliteral(
     <h2>Discover HA Devices</h2>
     <button class="btn btn-sm" onclick="discoverDevices()">Scan Home Assistant</button>
     <div id="discover-list"></div>
+
+    <h2>Alexa</h2>
+    <div id="alexa-section">
+        <div id="alexa-status"></div>
+        <button class="btn btn-sm" onclick="alexaStartAuth()">Authorize Alexa</button>
+        <div id="alexa-auth-flow" style="display:none; margin-top:12px;">
+            <p style="font-size:0.85em">1. Click to log in to Amazon:</p>
+            <a id="alexa-auth-link" href="#" target="_blank" class="btn btn-sm btn-outline" style="display:inline-block;text-decoration:none">Open Amazon Login</a>
+            <p style="font-size:0.85em;margin-top:12px">2. After login, paste the redirect URL here:</p>
+            <input type="text" id="alexa-callback-url" placeholder="Paste the maplanding URL here">
+            <button class="btn btn-sm" onclick="alexaCompleteAuth()">Complete Authorization</button>
+        </div>
+        <div id="alexa-auth-result"></div>
+        <div style="margin-top:12px">
+            <button class="btn btn-sm" onclick="alexaDiscover()">Discover Alexa Devices</button>
+        </div>
+        <div id="alexa-discover-list"></div>
+    </div>
 
     <script>
     let activeDevices = [];
@@ -282,12 +303,82 @@ static const char CONFIG_PAGE[] PROGMEM = R"rawliteral(
         if (activeDevices.find(d => d.entity_id === entityId)) return;
         const domain = entityId.split('.')[0];
         const [iconOn, iconOff] = defaultIcons(domain);
-        activeDevices.push({ entity_id: entityId, label: name, widget_type: widgetType, icon_on: iconOn, icon_off: iconOff, sort_order: activeDevices.length });
+        activeDevices.push({ entity_id: entityId, label: name, widget_type: widgetType, source: 'ha', icon_on: iconOn, icon_off: iconOff, sort_order: activeDevices.length });
         renderActive();
-        discoverDevices(); // Re-render to show "Added"
+        discoverDevices();
     }
 
     function esc(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+
+    // Alexa
+    function alexaCheckStatus() {
+        fetch('/api/alexa/status').then(r => r.json()).then(d => {
+            document.getElementById('alexa-status').innerHTML = d.authenticated
+                ? '<p style="color:#2e7d32">Alexa: Connected</p>'
+                : '<p style="color:#888">Alexa: Not authorized</p>';
+        }).catch(() => {});
+    }
+    alexaCheckStatus();
+
+    function alexaStartAuth() {
+        fetch('/api/alexa/auth/start')
+            .then(r => r.json()).then(d => {
+                if (d.auth_url) {
+                    document.getElementById('alexa-auth-link').href = d.auth_url;
+                    document.getElementById('alexa-auth-flow').style.display = 'block';
+                } else {
+                    document.getElementById('alexa-auth-result').innerHTML = '<p class="error">' + (d.error || 'Failed') + '</p>';
+                }
+            }).catch(e => { document.getElementById('alexa-auth-result').innerHTML = '<p class="error">Failed to start auth</p>'; });
+    }
+
+    function alexaCompleteAuth() {
+        const url = document.getElementById('alexa-callback-url').value;
+        fetch('/api/alexa/auth/callback', {
+            method: 'POST', headers: {'Content-Type':'application/json'},
+            body: JSON.stringify({url: url})
+        }).then(r => r.json()).then(d => {
+            if (d.success) {
+                document.getElementById('alexa-auth-result').innerHTML = '<p style="color:#2e7d32">Authorized!</p>';
+                document.getElementById('alexa-auth-flow').style.display = 'none';
+                alexaCheckStatus();
+            } else {
+                document.getElementById('alexa-auth-result').innerHTML = '<p class="error">' + (d.error || 'Auth failed') + '</p>';
+            }
+        }).catch(e => { document.getElementById('alexa-auth-result').innerHTML = '<p class="error">Auth request failed</p>'; });
+    }
+
+    function alexaDiscover() {
+        document.getElementById('alexa-discover-list').innerHTML = '<p>Discovering...</p>';
+        fetch('/api/alexa/discover').then(r => r.json()).then(data => {
+            if (data.error) { document.getElementById('alexa-discover-list').innerHTML = '<p class="error">' + data.error + '</p>'; return; }
+            const devices = data.devices || [];
+            let html = '<table class="discover-table"><tr><th></th><th>Name</th><th>Type</th><th>Status</th></tr>';
+            devices.forEach(d => {
+                const added = activeDevices.find(a => a.entity_id === d.entity_id);
+                const widgetGuess = d.has_brightness ? 'slider' : 'button';
+                const statusClass = d.reachable ? 'dev-state-on' : 'dev-state-off';
+                const statusText = d.reachable ? 'Online' : 'Offline';
+                html += '<tr' + (d.reachable ? '' : ' class="hidden-dev"') + '>';
+                html += '<td>' + (added ? '<span style="color:#2e7d32">Added</span>' :
+                    '<button class="btn btn-sm btn-outline" onclick="addAlexaDevice(\'' + esc(d.entity_id) + '\',\'' + esc(d.friendly_name) + '\',\'' + widgetGuess + '\')">Add</button>') + '</td>';
+                html += '<td>' + esc(d.friendly_name) + '</td>';
+                html += '<td><small>' + d.type + '</small></td>';
+                html += '<td><span class="dev-state ' + statusClass + '">' + statusText + '</span></td>';
+                html += '</tr>';
+            });
+            html += '</table>';
+            document.getElementById('alexa-discover-list').innerHTML = html;
+        }).catch(e => { document.getElementById('alexa-discover-list').innerHTML = '<p class="error">Discovery failed</p>'; });
+    }
+
+    function addAlexaDevice(entityId, name, widgetType) {
+        if (activeDevices.length >= 8) { alert('Max 8 devices'); return; }
+        if (activeDevices.find(d => d.entity_id === entityId)) return;
+        activeDevices.push({ entity_id: entityId, label: name, widget_type: widgetType, source: 'alexa', icon_on: 'lightbulb_outline', icon_off: 'lightbulb_off_outline', sort_order: activeDevices.length });
+        renderActive();
+        alexaDiscover();
+    }
     </script>
 </body>
 </html>
@@ -483,6 +574,7 @@ static void handle_ha_post_devices() {
         strlcpy(dev.entity_id, d["entity_id"] | "", sizeof(dev.entity_id));
         strlcpy(dev.label, d["label"] | "", sizeof(dev.label));
         strlcpy(dev.widget_type, d["widget_type"] | "button", sizeof(dev.widget_type));
+        strlcpy(dev.source, d["source"] | "ha", sizeof(dev.source));
         strlcpy(dev.icon_on, d["icon_on"] | "lightbulb_outline", sizeof(dev.icon_on));
         strlcpy(dev.icon_off, d["icon_off"] | "lightbulb_off_outline", sizeof(dev.icon_off));
         dev.sort_order = d["sort_order"] | cfg.ui_device_count;
@@ -496,9 +588,213 @@ static void handle_ha_post_devices() {
     server->send(200, "application/json", "{\"message\":\"Devices saved! Reboot to apply.\"}");
 }
 
+// Alexa auth status
+static void handle_alexa_status() {
+    JsonDocument doc;
+    doc["authenticated"] = (alexa_auth.getState() == AlexaAuthState::AUTHENTICATED);
+    String json;
+    serializeJson(doc, json);
+    server->send(200, "application/json", json);
+}
+
+// Start Alexa OAuth flow
+static void handle_alexa_auth_start() {
+    ESP_LOGI(TAG, "Starting Alexa OAuth flow");
+    alexa_auth.startOAuthFlow("amazon.com");
+
+    JsonDocument doc;
+    doc["auth_url"] = alexa_auth.getAuthUrl();
+    String json;
+    serializeJson(doc, json);
+    server->send(200, "application/json", json);
+}
+
+// Complete Alexa OAuth with maplanding URL
+static void handle_alexa_auth_callback() {
+    String body = server->arg("plain");
+    JsonDocument doc;
+    if (deserializeJson(doc, body)) {
+        server->send(400, "application/json", "{\"error\":\"Invalid JSON\"}");
+        return;
+    }
+
+    const char* url = doc["url"];
+    if (!url) {
+        server->send(400, "application/json", "{\"error\":\"No URL provided\"}");
+        return;
+    }
+
+    // Extract auth code from maplanding URL
+    const char* code_start = strstr(url, "openid.oa2.authorization_code=");
+    if (!code_start) {
+        server->send(400, "application/json", "{\"error\":\"No authorization code found in URL\"}");
+        return;
+    }
+    code_start += strlen("openid.oa2.authorization_code=");
+
+    char code[256] = {};
+    const char* code_end = strchr(code_start, '&');
+    size_t code_len = code_end ? (size_t)(code_end - code_start) : strlen(code_start);
+    if (code_len >= sizeof(code)) code_len = sizeof(code) - 1;
+    memcpy(code, code_start, code_len);
+
+    ESP_LOGI(TAG, "Alexa auth callback, code length: %d", code_len);
+
+    if (alexa_auth.handleAuthCallback(code)) {
+        AppConfig& cfg = store->mutableConfig();
+        cfg.alexa_enabled = true;
+        strlcpy(cfg.alexa_domain, alexa_auth.getDomain().c_str(), sizeof(cfg.alexa_domain));
+        store->save();
+
+        server->send(200, "application/json", "{\"success\":true}");
+    } else {
+        String err = alexa_auth.getLastError();
+        char buf[256];
+        snprintf(buf, sizeof(buf), "{\"error\":\"%s\"}", err.length() > 0 ? err.c_str() : "Auth failed");
+        server->send(500, "application/json", buf);
+    }
+}
+
+// Discover Alexa smart home devices
+static void handle_alexa_discover() {
+    if (alexa_auth.getState() != AlexaAuthState::AUTHENTICATED) {
+        server->send(401, "application/json", "{\"error\":\"Alexa not authorized\"}");
+        return;
+    }
+
+    // Ensure tokens are fresh
+    alexa_auth.refreshAccessToken();
+
+    AlexaAPI api;
+    api.begin(alexa_auth.getRefreshToken().c_str(),
+              alexa_auth.getAccessToken().c_str(),
+              alexa_auth.getCookies().c_str(),
+              alexa_auth.getCustomerID().c_str(),
+              alexa_auth.getDomain().c_str());
+
+    ESP_LOGI(TAG, "Alexa: discovering smart home devices...");
+    String response = api.discoverSmartHome();
+    if (response.isEmpty()) {
+        server->send(502, "application/json", "{\"error\":\"Alexa discovery returned empty\"}");
+        return;
+    }
+
+    JsonDocument ha_doc;
+    DeserializationError err = deserializeJson(ha_doc, response, DeserializationOption::NestingLimit(20));
+    if (err) {
+        ESP_LOGE(TAG, "Alexa discovery JSON parse failed: %s", err.c_str());
+        server->send(500, "application/json", "{\"error\":\"Failed to parse Alexa response\"}");
+        return;
+    }
+
+    // Parse GraphQL response
+    JsonDocument out_doc;
+    JsonArray devices = out_doc["devices"].to<JsonArray>();
+
+    JsonArray items = ha_doc["data"]["endpoints"]["items"];
+    if (items.isNull()) {
+        ESP_LOGE(TAG, "Alexa: no data.endpoints.items in response");
+        if (!ha_doc["errors"].isNull()) {
+            String errStr;
+            serializeJson(ha_doc["errors"], errStr);
+            ESP_LOGE(TAG, "Alexa GraphQL errors: %s", errStr.c_str());
+        }
+        server->send(502, "application/json", "{\"error\":\"No devices in Alexa response\"}");
+        return;
+    }
+    ESP_LOGI(TAG, "Alexa: found %d items in GraphQL response", items.size());
+    for (JsonObject item : items) {
+        JsonObject appliance = item["legacyAppliance"];
+        if (!appliance) continue;
+
+        const char* entity_id = appliance["entityId"];
+        const char* friendly_name = appliance["friendlyName"];
+        if (!entity_id || !friendly_name) continue;
+
+        // Skip Echo devices
+        JsonArray app_types = appliance["applianceTypes"];
+        bool is_echo = false;
+        for (const char* t : app_types) {
+            if (t && strcmp(t, "ALEXA_VOICE_ENABLED") == 0) { is_echo = true; break; }
+        }
+        if (is_echo) continue;
+
+        // Determine capabilities (can be strings or objects with interfaceName)
+        JsonArray caps = appliance["capabilities"];
+        bool has_power = false;
+        bool has_brightness = false;
+        for (JsonVariant cap : caps) {
+            const char* s = nullptr;
+            if (cap.is<const char*>()) {
+                s = cap.as<const char*>();
+            } else if (cap.is<JsonObject>()) {
+                s = cap["interfaceName"];
+            }
+            if (s) {
+                if (strstr(s, "PowerController")) has_power = true;
+                if (strstr(s, "BrightnessController")) has_brightness = true;
+            }
+        }
+        if (!has_power && !has_brightness) continue;
+
+        JsonObject d = devices.add<JsonObject>();
+        d["entity_id"] = entity_id;
+        d["friendly_name"] = friendly_name;
+        d["type"] = has_brightness ? "light" : "switch";
+        d["has_brightness"] = has_brightness;
+        d["reachable"] = true;
+    }
+
+    // Poll state to get reachability
+    if (devices.size() > 0) {
+        JsonDocument poll_doc;
+        JsonArray reqs = poll_doc["stateRequests"].to<JsonArray>();
+        for (JsonObject d : devices) {
+            JsonObject r = reqs.add<JsonObject>();
+            r["entityId"] = d["entity_id"];
+            r["entityType"] = "ENTITY";
+        }
+        String poll_body;
+        serializeJson(poll_doc, poll_body);
+
+        String poll_resp = api.pollDeviceState(poll_body);
+        if (!poll_resp.isEmpty()) {
+            JsonDocument poll_result;
+            if (!deserializeJson(poll_result, poll_resp, DeserializationOption::NestingLimit(20))) {
+                for (JsonObject ds : poll_result["deviceStates"].as<JsonArray>()) {
+                    const char* eid = ds["entity"]["entityId"];
+                    if (!eid) continue;
+
+                    for (JsonObject d : devices) {
+                        if (strcmp(d["entity_id"], eid) != 0) continue;
+                        for (JsonVariant cs : ds["capabilityStates"].as<JsonArray>()) {
+                            const char* csStr = cs.as<const char*>();
+                            if (!csStr) continue;
+                            JsonDocument cap_doc;
+                            if (deserializeJson(cap_doc, csStr)) continue;
+                            if (strcmp(cap_doc["namespace"] | "", "Alexa.EndpointHealth") == 0 &&
+                                strcmp(cap_doc["name"] | "", "connectivity") == 0) {
+                                const char* val = cap_doc["value"]["value"];
+                                if (val) d["reachable"] = (strcmp(val, "OK") == 0);
+                            }
+                        }
+                        break;
+                    }
+                }
+            }
+        }
+    }
+
+    String json;
+    serializeJson(out_doc, json);
+    server->send(200, "application/json", json);
+    ESP_LOGI(TAG, "Alexa discovery returned %d devices", devices.size());
+}
+
 void config_server_start(ConfigStore* config_store) {
     if (server) return;
     store = config_store;
+    alexa_auth.loadFromNVS();
 
     server = new WebServer(80);
     server->on("/", HTTP_GET, handle_root);
@@ -507,6 +803,12 @@ void config_server_start(ConfigStore* config_store) {
     server->on("/api/ha/discover", HTTP_GET, handle_ha_discover);
     server->on("/api/ha/devices", HTTP_GET, handle_ha_get_devices);
     server->on("/api/ha/devices", HTTP_POST, handle_ha_post_devices);
+    // Alexa endpoints
+    server->on("/api/alexa/status", HTTP_GET, handle_alexa_status);
+    server->on("/api/alexa/auth/start", HTTP_GET, handle_alexa_auth_start);
+    server->on("/api/alexa/auth/callback", HTTP_POST, handle_alexa_auth_callback);
+    server->on("/api/alexa/discover", HTTP_GET, handle_alexa_discover);
+
     server->on("/api/icons", HTTP_GET, []() {
         // Serve icon manifest from PROGMEM
         String json;

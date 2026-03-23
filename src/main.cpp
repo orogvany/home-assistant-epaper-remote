@@ -11,6 +11,7 @@
 #include "wake_lock.h"
 #include "managers/battery.h"
 #include "managers/power.h"
+#include "managers/alexa_manager.h"
 #include "managers/ha_rest_manager.h"
 #include "managers/touch.h"
 #include "managers/ui.h"
@@ -34,6 +35,7 @@ static SharedUIState shared_ui_state;
 static UITaskArgs ui_task_args;
 static TouchTaskArgs touch_task_args;
 static HARestManagerArgs hass_task_args;
+static AlexaManagerArgs alexa_task_args;
 static BatteryTaskArgs battery_task_args;
 
 static void init_display(FASTEPD* ep) {
@@ -200,13 +202,18 @@ void setup() {
     hass_task_args.epaper = &epaper;
     xTaskCreate(ha_rest_manager_task, "ha_rest", 8192, &hass_task_args, 1, &store.home_assistant_task);
 
+    // Connect to Alexa (if configured)
+    alexa_task_args.store = &store;
+    alexa_task_args.config_store = &config_store;
+    xTaskCreate(alexa_manager_task, "alexa", 12288, &alexa_task_args, 1, &store.alexa_task);
+
     // Launch touch task
     touch_task_args.bbct = &bbct;
     touch_task_args.screen = &screen;
     touch_task_args.state = &shared_ui_state;
     touch_task_args.store = &store;
     touch_task_args.config_store = &config_store;
-    xTaskCreate(touch_task, "touch", 4096, &touch_task_args, 1, nullptr);
+    xTaskCreate(touch_task, "touch", 16384, &touch_task_args, 1, nullptr);
 
     // Launch battery monitoring task
     battery_task_args.store = &store;

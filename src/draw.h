@@ -8,6 +8,7 @@ void drawCenteredIconWithText(FASTEPD* epaper, const uint8_t* icon, const char* 
                               uint8_t icon_spacing);
 
 void drawStatusBar(FASTEPD* epaper, bool wifi_connected, bool ha_connected,
+                   bool alexa_connected, bool alexa_enabled,
                    uint8_t battery_pct, bool battery_charging, bool show_battery);
 void drawGearIcon(FASTEPD* epaper);
 void drawSettingsMenu(FASTEPD* epaper);

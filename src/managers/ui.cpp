@@ -43,6 +43,7 @@ void ui_main_screen_full_draw(UIState* state, BitDepth depth, Screen* screen, FA
         screen->widgets[widget_idx]->fullDraw(epaper, depth, state->entity_values[widget_idx]);
     }
     drawStatusBar(epaper, state->wifi_connected, state->ha_connected,
+                  state->alexa_connected, state->alexa_enabled,
                   state->battery_percentage, state->battery_charging,
                   FEATURE_BATTERY_INDICATOR && HAS_BATTERY_ADC);
     drawGearIcon(epaper);
@@ -182,8 +183,10 @@ void ui_task(void* arg) {
                 if (current_state.battery_percentage != displayed_state.battery_percentage ||
                     current_state.battery_charging != displayed_state.battery_charging ||
                     current_state.wifi_connected != displayed_state.wifi_connected ||
-                    current_state.ha_connected != displayed_state.ha_connected) {
+                    current_state.ha_connected != displayed_state.ha_connected ||
+                    current_state.alexa_connected != displayed_state.alexa_connected) {
                     drawStatusBar(ctx->epaper, current_state.wifi_connected, current_state.ha_connected,
+                                  current_state.alexa_connected, current_state.alexa_enabled,
                                   current_state.battery_percentage, current_state.battery_charging,
                                   FEATURE_BATTERY_INDICATOR && HAS_BATTERY_ADC);
                     display_is_dirty = true;

@@ -30,6 +30,8 @@ struct UIState {
     bool pin_wrong = false;
     bool wifi_connected = false;
     bool ha_connected = false;
+    bool alexa_connected = false;
+    bool alexa_enabled = false;
 };
 
 // The touch task needs to know the current state of the UI.

@@ -1,0 +1,25 @@
+alexa-esp32
+Copyright 2026 HomeControl Contributors
+
+This library is a C++ port of alexapy, adapted for the ESP32 Arduino platform.
+The API client logic, authentication flow, and endpoint usage were derived from
+the alexapy Python package by line-by-line study and reimplementation in C++.
+
+This product includes software developed by:
+
+  alexapy
+  https://gitlab.com/keatontaylor/alexapy
+  Copyright (c) Keaton Taylor, Alan Tse
+  Licensed under the Apache License, Version 2.0
+
+  alexa_media_player (Home Assistant integration)
+  https://github.com/alandtse/alexa_media_player
+  Copyright (c) Alan Tse
+  Licensed under the Apache License, Version 2.0
+
+This library also depends on:
+
+  ArduinoJson
+  https://arduinojson.org/
+  Copyright (c) 2014-2025 Benoit Blanchon
+  Licensed under the MIT License

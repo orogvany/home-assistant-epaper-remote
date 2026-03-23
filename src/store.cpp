@@ -29,6 +29,17 @@ void store_set_wifi_state(EntityStore* store, ConnState state) {
     }
 }
 
+void store_set_alexa_state(EntityStore* store, ConnState state) {
+    xSemaphoreTake(store->mutex, portMAX_DELAY);
+    ConnState previous_state = store->alexa;
+    store->alexa = state;
+    xSemaphoreGive(store->mutex);
+
+    if (state != previous_state && store->ui_task) {
+        xTaskNotifyGive(store->ui_task);
+    }
+}
+
 void store_set_hass_state(EntityStore* store, ConnState state) {
     xSemaphoreTake(store->mutex, portMAX_DELAY);
     ConnState previous_state = store->home_assistant;
@@ -78,7 +89,10 @@ void store_send_command(EntityStore* store, uint8_t entity_idx, uint8_t value) {
     // from sleeping between touch releasing its lock and HA acquiring one
     wake_lock_acquire();
 
-    if (store->home_assistant_task) {
+    EntitySource source = store->entities[entity_idx].source;
+    if (source == EntitySource::Alexa && store->alexa_task) {
+        xTaskNotifyGive(store->alexa_task);
+    } else if (store->home_assistant_task) {
         xTaskNotifyGive(store->home_assistant_task);
     }
     if (store->ui_task) {
@@ -141,6 +155,8 @@ void store_update_ui_state(EntityStore* store, const Screen* screen, UIState* ui
     ui_state->pin_wrong = store->pin_wrong;
     ui_state->wifi_connected = (store->wifi != ConnState::ConnectionError);
     ui_state->ha_connected = (store->home_assistant != ConnState::ConnectionError);
+    ui_state->alexa_connected = (store->alexa != ConnState::ConnectionError);
+    ui_state->alexa_enabled = store->alexa_enabled;
 
     xSemaphoreGive(store->mutex);
 }
@@ -215,6 +231,7 @@ EntityRef store_add_entity(EntityStore* store, EntityConfig entity) {
     HomeAssistantEntity& e = store->entities[entity_id];
     e.entity_id = entity.entity_id;
     e.command_type = entity.command_type;
+    e.source = entity.source;
     e.current.type = entity.value_type;
     e.command_value = 0;
     e.command_pending = false;

@@ -88,12 +88,14 @@ int build_widgets_from_config(const AppConfig& app, EntityStore* store, Screen* 
         const UIDevice& dev = app.ui_devices[i];
         bool is_slider = (strcmp(dev.widget_type, "slider") == 0);
         bool is_weather = (strcmp(dev.widget_type, "weather") == 0);
+        bool is_alexa = (strcmp(dev.source, "alexa") == 0);
 
         if (is_weather) {
             EntityConfig entity = {
                 .entity_id = dev.entity_id,
                 .command_type = CommandType::SwitchOnOff,
                 .value_type = EntityValueType::Weather,
+                .source = is_alexa ? EntitySource::Alexa : EntitySource::HomeAssistant,
                 .read_only = true,
             };
 
@@ -109,9 +111,17 @@ int build_widgets_from_config(const AppConfig& app, EntityStore* store, Screen* 
                 screen);
             y += weather_spacing;
         } else {
+            CommandType cmd_type;
+            if (is_alexa) {
+                cmd_type = is_slider ? CommandType::AlexaSetBrightness : CommandType::AlexaSetPower;
+            } else {
+                cmd_type = domain_to_command_type(dev.entity_id, dev.widget_type);
+            }
+
             EntityConfig entity = {
                 .entity_id = dev.entity_id,
-                .command_type = domain_to_command_type(dev.entity_id, dev.widget_type),
+                .command_type = cmd_type,
+                .source = is_alexa ? EntitySource::Alexa : EntitySource::HomeAssistant,
             };
 
             // Extract domain for default icon lookup

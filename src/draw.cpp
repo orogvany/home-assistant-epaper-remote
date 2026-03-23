@@ -53,6 +53,7 @@ constexpr uint16_t STATUS_ICON_SIZE = 24;
 constexpr uint16_t STATUS_ICON_GAP = 6;
 
 void drawStatusBar(FASTEPD* epaper, bool wifi_connected, bool ha_connected,
+                   bool alexa_connected, bool alexa_enabled,
                    uint8_t battery_pct, bool battery_charging, bool show_battery) {
     char label[8];
     BB_RECT text_rect = {};
@@ -74,6 +75,7 @@ void drawStatusBar(FASTEPD* epaper, bool wifi_connected, bool ha_connected,
     uint8_t icon_count = 0;
     if (!wifi_connected) icon_count++;
     if (!ha_connected) icon_count++;
+    if (alexa_enabled && !alexa_connected) icon_count++;
 
     uint16_t status_section_w = 0;
     if (icon_count > 0) {
@@ -99,6 +101,10 @@ void drawStatusBar(FASTEPD* epaper, bool wifi_connected, bool ha_connected,
     }
     if (!ha_connected) {
         epaper->loadBMP(status_ha_off, x, icon_y, 0xf, BBEP_BLACK);
+        x += STATUS_ICON_SIZE + STATUS_ICON_GAP;
+    }
+    if (alexa_enabled && !alexa_connected) {
+        epaper->loadBMP(status_alexa_off, x, icon_y, 0xf, BBEP_BLACK);
         x += STATUS_ICON_SIZE + STATUS_ICON_GAP;
     }
     if (icon_count > 0 && show_battery) {

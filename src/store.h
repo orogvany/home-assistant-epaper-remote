@@ -9,6 +9,11 @@
 #include "ui_state.h"
 #include <cstdint>
 
+enum class EntitySource : uint8_t {
+    HomeAssistant,
+    Alexa,
+};
+
 enum class CommandType : uint8_t {
     SetLightBrightnessPercentage,
     SetFanSpeedPercentage,
@@ -23,11 +28,14 @@ enum class CommandType : uint8_t {
     SetInputNumber,
     InputBooleanToggle,
     VacuumCommand,
+    AlexaSetPower,
+    AlexaSetBrightness,
 };
 
 struct HomeAssistantEntity {
     const char* entity_id;
     CommandType command_type;
+    EntitySource source = EntitySource::HomeAssistant;
     EntityValue current;
     uint8_t command_value;
     bool command_pending;
@@ -38,6 +46,7 @@ struct EntityConfig {
     const char* entity_id;
     CommandType command_type;
     EntityValueType value_type = EntityValueType::Toggle;
+    EntitySource source = EntitySource::HomeAssistant;
     bool read_only = false;
 };
 
@@ -57,6 +66,7 @@ struct BatteryState {
 struct EntityStore {
     ConnState wifi = ConnState::Initializing;
     ConnState home_assistant = ConnState::Initializing;
+    ConnState alexa = ConnState::Initializing;
     BatteryState battery;
 
     HomeAssistantEntity entities[MAX_ENTITIES];
@@ -68,9 +78,11 @@ struct EntityStore {
     bool touch_ready = false;
     uint8_t pin_digits_entered = 0;
     bool pin_wrong = false;
+    bool alexa_enabled = false;
 
     SemaphoreHandle_t mutex;
     TaskHandle_t home_assistant_task;
+    TaskHandle_t alexa_task;
     TaskHandle_t ui_task;
     EventGroupHandle_t event_group = nullptr;
 };
@@ -87,6 +99,7 @@ constexpr EventBits_t BIT_WIFI_UP = (1 << 0);
 void store_init(EntityStore* store);
 void store_set_wifi_state(EntityStore* store, ConnState state);
 void store_set_hass_state(EntityStore* store, ConnState state);
+void store_set_alexa_state(EntityStore* store, ConnState state);
 void store_update_value(EntityStore* store, uint8_t entity_idx, uint8_t value);
 void store_update_weather(EntityStore* store, uint8_t entity_idx, const WeatherState& weather);
 void store_send_command(EntityStore* store, uint8_t entity_idx, uint8_t value);

@@ -3,7 +3,7 @@
 #include <ArduinoJson.h>
 
 // NVS config schema version - bump on breaking changes, triggers wipe + reconfigure
-constexpr int CONFIG_VERSION = 2;
+constexpr int CONFIG_VERSION = 3;
 
 // Maximum number of devices we can track
 constexpr int MAX_KNOWN_DEVICES = 64;
@@ -22,6 +22,7 @@ struct UIDevice {
     char entity_id[64];
     char label[32];
     char widget_type[16];     // "slider", "button", or "weather"
+    char source[8];           // "ha" or "alexa"
     char icon_on[32];
     char icon_off[32];
     int sort_order;
@@ -63,6 +64,10 @@ struct AppConfig {
     // UI devices (what we actually show)
     UIDevice ui_devices[MAX_UI_DEVICES];
     int ui_device_count;
+
+    // Alexa
+    bool alexa_enabled;
+    char alexa_domain[32];    // "amazon.com", "amazon.co.uk", etc.
 
     // Security
     bool pin_enabled;

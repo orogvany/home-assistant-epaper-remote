@@ -145,6 +145,11 @@ bool ConfigStore::_serializeToJson(String& output) {
     ha["url"] = _config.ha_url;
     ha["token"] = _config.ha_token;
 
+    // Alexa
+    JsonObject alexa = doc["alexa"].to<JsonObject>();
+    alexa["enabled"] = _config.alexa_enabled;
+    alexa["domain"] = _config.alexa_domain;
+
     // Settings
     JsonObject settings = doc["settings"].to<JsonObject>();
     settings["poll_interval_ms"] = _config.poll_interval_ms;
@@ -171,6 +176,7 @@ bool ConfigStore::_serializeToJson(String& output) {
         d["entity_id"] = _config.ui_devices[i].entity_id;
         d["label"] = _config.ui_devices[i].label;
         d["widget_type"] = _config.ui_devices[i].widget_type;
+        d["source"] = _config.ui_devices[i].source;
         d["icon_on"] = _config.ui_devices[i].icon_on;
         d["icon_off"] = _config.ui_devices[i].icon_off;
         d["sort_order"] = _config.ui_devices[i].sort_order;
@@ -209,6 +215,10 @@ bool ConfigStore::_deserializeFromJson(const char* json, size_t len) {
     strlcpy(_config.ha_url, doc["ha"]["url"] | "", sizeof(_config.ha_url));
     strlcpy(_config.ha_token, doc["ha"]["token"] | "", sizeof(_config.ha_token));
 
+    // Alexa
+    _config.alexa_enabled = doc["alexa"]["enabled"] | false;
+    strlcpy(_config.alexa_domain, doc["alexa"]["domain"] | "amazon.com", sizeof(_config.alexa_domain));
+
     // Settings
     _config.poll_interval_ms = doc["settings"]["poll_interval_ms"] | 10000;
     _config.idle_wifi_disconnect_ms = doc["settings"]["idle_wifi_disconnect_ms"] | (5 * 60 * 1000);
@@ -238,6 +248,7 @@ bool ConfigStore::_deserializeFromJson(const char* json, size_t len) {
         strlcpy(dev.entity_id, d["entity_id"] | "", sizeof(dev.entity_id));
         strlcpy(dev.label, d["label"] | "", sizeof(dev.label));
         strlcpy(dev.widget_type, d["widget_type"] | "button", sizeof(dev.widget_type));
+        strlcpy(dev.source, d["source"] | "ha", sizeof(dev.source));
         strlcpy(dev.icon_on, d["icon_on"] | "lightbulb_outline", sizeof(dev.icon_on));
         strlcpy(dev.icon_off, d["icon_off"] | "lightbulb_off_outline", sizeof(dev.icon_off));
         dev.sort_order = d["sort_order"] | 0;
