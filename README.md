@@ -73,14 +73,19 @@ pio run -e lilygo-t5-s3 --target upload
 
 ## Features
 
-- On-screen battery percentage indicator (M5Paper S3)
-- REST connection to Home Assistant for real-time entity state updates (Websocket updates were too slow)
-- Slider widgets for dimmable lights and fan speed
-- Toggle button widgets for switches and automations
-- Partial display updates for responsive touch interaction
-- Better power management for long battery life
-- Captive portal for WIFI connection and Web driven configuration for device discovery and management
-- Optional pin gating for configuration (default:1234)
+- **Multi-source**: Home Assistant REST API + Amazon Alexa smart home control from one device
+- **Weather widget**: Live weather with condition icons, temperature, humidity from HA weather entities
+- **38 device icons**: Cupertino-style icon set covering lights, fans, switches, covers, locks, media, sensors, and more
+- **Web configuration**: Device discovery, drag-drop ordering, icon picker, Alexa OAuth flow
+- **WiFi captive portal**: First-boot WiFi setup via WiFiManager
+- **Battery indicator**: Status bar with percentage, charging bolt icon
+- **Status bar**: WiFi, HA, and Alexa connection status icons (only shown on error)
+- **Slider widgets**: Dimmable lights, fan speed, cover position
+- **Toggle buttons**: Switches, automations, scenes, locks
+- **Partial display updates**: Responsive touch interaction with damage-rect 1BPP updates
+- **Power management**: Modem sleep, light sleep, idle WiFi disconnect, PMS150G deep shutdown
+- **PIN gate**: Optional 4-digit PIN for settings access
+- **NVS config versioning**: Breaking config changes auto-wipe with clean reconfigure
 
 ### Updating the font
 
