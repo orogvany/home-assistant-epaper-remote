@@ -187,13 +187,33 @@ void Slider::fullDraw(FASTEPD* display, BitDepth depth, const EntityValue& value
         partialDraw(display, depth, zero, value);
     }
 
-    // Add the title
-    BB_RECT rect;
+    // Draw label inline with the slider track (same position as button labels)
+    uint16_t track_y = rect_.y + rect_.h - BUTTON_SIZE;
+    BB_RECT text_rect;
     display->setFont(Montserrat_Regular_26);
-    display->setTextColor(BBEP_BLACK);
-    display->getStringBox("pI", &rect); // FIXME How to get actual font height ?
-    // display->getStringBox(label_, &rect);
-    display->setCursor(rect_.x, rect_.y + rect.h);
+    display->getStringBox("pI", &text_rect);
+    uint16_t label_x = rect_.x + BUTTON_SIZE + 30;
+    uint16_t label_y = track_y + (BUTTON_SIZE + text_rect.h) / 2 - 5;
+
+    // Pick text color: if fill extends past label start, use white on black
+    uint16_t slider_width = rect_.w - SLIDER_OFFSET - BUTTON_SIZE / 2;
+    uint16_t fill_end_x = rect_.x;
+    if (value.range > 0) {
+        fill_end_x = rect_.x + SLIDER_OFFSET + (value.range * slider_width) / 100;
+    }
+
+    uint8_t text_color;
+    if (depth != BitDepth::BD_4BPP) {
+        text_color = BBEP_BLACK;
+    } else if (value.range == 0) {
+        text_color = BBEP_BLACK;
+    } else if (value.range == 100) {
+        text_color = 0xf;
+    } else {
+        text_color = 0x6;
+    }
+    display->setTextColor(text_color);
+    display->setCursor(label_x, label_y);
     display->write(label_);
 }
 

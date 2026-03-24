@@ -190,7 +190,7 @@ void setup() {
     ui_task_args.store = &store;
     ui_task_args.shared_state = &shared_ui_state;
     ui_task_args.ha_url = config_store.config().ha_url;
-    xTaskCreatePinnedToCore(ui_task, "ui", 4096, &ui_task_args, 1, &store.ui_task, 1);
+    xTaskCreatePinnedToCore(ui_task, "ui", 8192, &ui_task_args, 1, &store.ui_task, 1);
 
     // Connect to wifi and launch watcher
     launch_wifi(&config, &store);
