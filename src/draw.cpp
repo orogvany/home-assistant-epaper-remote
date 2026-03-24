@@ -90,7 +90,7 @@ void drawStatusBar(FASTEPD* epaper, bool wifi_connected, bool ha_connected,
     uint16_t y = BATT_MARGIN;
 
     // Clear the entire status bar area
-    uint16_t clear_h = std::max({(int)STATUS_ICON_SIZE, (int)BATT_ICON_H, text_rect.h}) + 4;
+    uint16_t clear_h = std::max((int)STATUS_ICON_SIZE, (int)BATT_ICON_H) + 4;
     epaper->fillRect(x - 4, y - 2, total_w + 8, clear_h, 0xf);
 
     // Draw status icons (leftmost), vertically centered on same baseline as battery
